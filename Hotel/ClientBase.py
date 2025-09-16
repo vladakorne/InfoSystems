@@ -1,3 +1,7 @@
+import re
+import json
+from openpyxl import load_workbook
+
 class Client:
     def __init__(self, surname: str, name: str, phone: str,
                    patronymic: str = "", passport: str = None, 
@@ -76,7 +80,7 @@ class Client:
 
     @patronymic.setter
     def patronymic(self, value: str):
-        self._patronymic = self.validate_fio(value, "Отчество) if value else ""
+        self._patronymic = self.validate_fio(value, "Отчество") if value else ""
 
     @property
     def passport(self): 
@@ -108,4 +112,61 @@ class Client:
 
     @comment.setter
     def comment(self, value: str):
-        self._comment = value
+        self._comment = value or ""
+
+    @classmethod
+    def from_string(cls, line: str, delimiter=";"):
+        parts = line.strip().split(delimiter)
+        if len(parts) < 3:
+            raise ValueError("Строка должна содержать минимум фамилию, имя и телефон!")
+        return cls(
+            surname=parts[0],
+            name=parts[1],
+            patronymic=parts[2],
+            passport=parts[3],
+            phone=parts[4],
+            email=parts[5] if len(parts) > 5 else None,
+            comment=parts[6] if len(parts) > 6 else ""
+        )
+
+    @classmethod
+    def from_txt(cls, filepath: str, delimiter=";"):
+        with open(filepath, encoding="utf-8") as f:
+            line = f.readline()
+        return cls.from_string(line, delimiter)
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        required_fields = ["surname", "name", "phone"]
+        for field in required_fields:
+            if field not in data or not str(data[field]).strip():
+                raise ValueError(f"Обязательное поле '{field}' отсутствует или пустое!")
+
+        return cls(
+            surname=data["surname"],
+            name=data["name"],
+            patronymic=data.get("patronymic", ""),
+            passport=data.get("passport"),
+            phone=data["phone"],
+            email=data.get("email"),
+            comment=data.get("comment", "")
+        )
+
+    @classmethod
+    def from_excel(cls, filepath: str, sheet=0, row=2):
+        wb = load_workbook(filepath)
+        ws = wb[wb.sheetnames[sheet]]
+        data = {
+            "surname": ws.cell(row=row, column=1).value,
+            "name": ws.cell(row=row, column=2).value,
+            "patronymic": ws.cell(row=row, column=3).value,
+            "passport": ws.cell(row=row, column=4).value,
+            "phone": ws.cell(row=row, column=5).value,
+            "email": ws.cell(row=row, column=6).value,
+            "comment": ws.cell(row=row, column=7).value,
+        }
+        return cls.from_dict(data)
+
+    @classmethod
+    def from_json(cls, json_str: str):
+        return cls.from_dict(json.loads(json_str))
