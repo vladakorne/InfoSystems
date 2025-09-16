@@ -170,3 +170,27 @@ class Client:
     @classmethod
     def from_json(cls, json_str: str):
         return cls.from_dict(json.loads(json_str))
+    
+    def equals(self, other, by_all_fields=True):
+        if not isinstance(other, Client):
+            return False
+        if by_all_fields:
+            return (
+                    self.surname == other.surname and
+                    self.name == other.name and
+                    self.patronymic == other.patronymic and
+                    self.passport == other.passport and
+                    self.phone == other.phone and
+                    self.email == other.email and
+                    self.comment == other.comment
+            )
+        else:
+            return self.passport == other.passport and self.phone == other.phone
+    
+    def __str__(self):
+        return f"Client: {self.surname} {self.name} {self.patronymic}".strip()
+
+    def __repr__(self):
+        return (f"Client(surname='{self.surname}', name='{self.name}', "
+                f"patronymic='{self.patronymic}', passport='{self.passport}', "
+                f"phone='{self.phone}', email='{self.email}', comment='{self.comment}')")
