@@ -15,3 +15,4 @@ class ClientShort(Client):
 
     def __repr__(self):
         return f"ClientShort(surname='{self.surname}', name='{self.name}', phone='{self.phone}')"
+
