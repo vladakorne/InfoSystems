@@ -1,18 +1,57 @@
 import re
 import json
-from openpyxl import load_workbook
+import os
 
 class Client:
-    def __init__(self, surname: str, name: str, phone: str,
-                   patronymic: str = "", passport: str = None, 
-                   email: str = None, comment: str = ""):
-          self._surname = self.validate_fio(surname, "Фамилия")
-          self._name = self.validate_fio(name, "Имя")
-          self._patronymic = self.validate_fio(patronymic, "Отчество") if patronymic else ""
-          self._passport = self.validate_passport(passport)
-          self._phone = self.validate_phone(phone)
-          self._email = self.validate_email(email) if email else None
-          self._comment = comment or ""
+    def __init__(self, *args, **kwargs):
+        if kwargs.get("from_string"):
+            if not args:
+                raise ValueError("Для from_string необходимо передать строку первым аргументом")
+            parts = [p.strip() for p in args[0].split(",")]
+            while len(parts) < 7:
+                parts.append("")
+            self._init_fields(*parts[:7])
+
+        elif kwargs.get("from_dict"):
+            if not args or not isinstance(args[0], dict):
+                raise ValueError("Для from_dict необходимо передать dict первым аргументом")
+            data = args[0]
+            self._init_fields(
+                data.get("surname"),
+                data.get("name"),
+                data.get("patronymic", ""),
+                data.get("phone"),
+                data.get("passport"),
+                data.get("email"),
+                data.get("comment", "")
+            )
+
+        elif kwargs.get("from_json"):
+            if not args:
+                raise ValueError("Для from_json необходимо передать JSON-строку первым аргументом")
+            try:
+                data = json.loads(args[0])
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Некорректный JSON: {e}")
+            if not isinstance(data, dict):
+                raise ValueError("JSON должен содержать объект (dict)")
+
+            self.__init__(data, from_dict=True)
+
+        else:
+            self._init_fields(*args)
+
+    def _init_fields(self, surname: str, name: str, patronymic: str = "",
+                     phone: str = None, passport: str = None, email: str = None, comment: str = ""):
+        self._surname = self.validate_fio(surname, "Фамилия")
+        self._name = self.validate_fio(name, "Имя")
+        self._phone = self.validate_phone(phone)
+
+        self._patronymic = self.validate_fio(patronymic, "Отчество") if patronymic else ""
+        self._passport = self.validate_passport(passport)
+        self._email = self.validate_email(email) if email else None
+        self._comment = comment or ""
+
 
     @staticmethod
     def validate_required(value, field_name: str):
@@ -114,79 +153,53 @@ class Client:
     def comment(self, value: str):
         self._comment = value or ""
 
-    @classmethod
-    def from_string(cls, line: str, delimiter=";"):
-        parts = line.strip().split(delimiter)
-        if len(parts) < 3:
-            raise ValueError("Строка должна содержать минимум фамилию, имя и телефон!")
-        return cls(
-            surname=parts[0],
-            name=parts[1],
-            patronymic=parts[2],
-            passport=parts[3],
-            phone=parts[4],
-            email=parts[5] if len(parts) > 5 else None,
-            comment=parts[6] if len(parts) > 6 else ""
-        )
+       @staticmethod
+    def read_clients_from_txt(path):
+        clients = []
+        if not os.path.exists(path):
+            print(f"Файл {path} не найден!")
+            return clients
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        clients.append(Client(line, from_string=True))
+                    except Exception as e:
+                        print(f"Ошибка при чтении строки '{line}': {e}")
+        return clients
 
-    @classmethod
-    def from_txt(cls, filepath: str, delimiter=";"):
-        with open(filepath, encoding="utf-8") as f:
-            line = f.readline()
-        return cls.from_string(line, delimiter)
+    @staticmethod
+    def read_clients_from_json(path):
+        clients = []
+        if not os.path.exists(path):
+            print(f"Файл {path} не найден!")
+            return clients
+        with open(path, "r", encoding="utf-8") as f:
+            try:
+                data_list = json.load(f)
+                if isinstance(data_list, dict):
+                    data_list = [data_list]
+                for data in data_list:
+                    clients.append(Client(data, from_dict=True))
+            except Exception as e:
+                print(f"Ошибка при чтении JSON {path}: {e}")
+        return clients
 
-    @classmethod
-    def from_dict(cls, data: dict):
-        required_fields = ["surname", "name", "phone"]
-        for field in required_fields:
-            if field not in data or not str(data[field]).strip():
-                raise ValueError(f"Обязательное поле '{field}' отсутствует или пустое!")
-
-        return cls(
-            surname=data["surname"],
-            name=data["name"],
-            patronymic=data.get("patronymic", ""),
-            passport=data.get("passport"),
-            phone=data["phone"],
-            email=data.get("email"),
-            comment=data.get("comment", "")
-        )
-
-    @classmethod
-    def from_excel(cls, filepath: str, sheet=0, row=2):
-        wb = load_workbook(filepath)
-        ws = wb[wb.sheetnames[sheet]]
-        data = {
-            "surname": ws.cell(row=row, column=1).value,
-            "name": ws.cell(row=row, column=2).value,
-            "patronymic": ws.cell(row=row, column=3).value,
-            "passport": ws.cell(row=row, column=4).value,
-            "phone": ws.cell(row=row, column=5).value,
-            "email": ws.cell(row=row, column=6).value,
-            "comment": ws.cell(row=row, column=7).value,
-        }
-        return cls.from_dict(data)
-
-    @classmethod
-    def from_json(cls, json_str: str):
-        return cls.from_dict(json.loads(json_str))
     
     def equals(self, other, by_all_fields=True):
         if not isinstance(other, Client):
             return False
-        if by_all_fields:
-            return (
-                    self.surname == other.surname and
-                    self.name == other.name and
-                    self.patronymic == other.patronymic and
-                    self.passport == other.passport and
-                    self.phone == other.phone and
-                    self.email == other.email and
-                    self.comment == other.comment
+        return (
+                self.surname == other.surname and
+                self.name == other.name and
+                self.patronymic == other.patronymic and
+                self.passport == other.passport and
+                self.phone == other.phone and
+                self.email == other.email and
+                self.comment == other.comment
             )
-        else:
-            return self.passport == other.passport and self.phone == other.phone
-    
+
     def __str__(self):
         return f"Client: {self.surname} {self.name} {self.patronymic}".strip()
 
