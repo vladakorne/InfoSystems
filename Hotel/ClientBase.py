@@ -1,22 +1,41 @@
 import re
 import json
 import os
+from ClientShortInfo import ClientShort
 
-class Client:
+class Client(ClientShort):
     def __init__(self, *args, **kwargs):
-        if kwargs.get("from_string"):
+        if kwargs.get("from_client_short"):
+            client_short = args[0]
+            if not isinstance(client_short, ClientShort):
+                raise TypeError("Client.from_client_short требует объект ClientShort")
+            passport = kwargs.get("passport")
+            email = kwargs.get("email")
+            comment = kwargs.get("comment", "")
+
+            self._init_full_fields(
+                client_short.surname,
+                client_short.name,
+                client_short.patronymic,
+                client_short.phone,
+                passport,
+                email,
+                comment
+            )
+
+        elif kwargs.get("from_string"):
             if not args:
                 raise ValueError("Для from_string необходимо передать строку первым аргументом")
             parts = [p.strip() for p in args[0].split(",")]
             while len(parts) < 7:
                 parts.append("")
-            self._init_fields(*parts[:7])
+            self._init_full_fields(*parts[:7])
 
         elif kwargs.get("from_dict"):
             if not args or not isinstance(args[0], dict):
                 raise ValueError("Для from_dict необходимо передать dict первым аргументом")
             data = args[0]
-            self._init_fields(
+            self._init_full_fields(
                 data.get("surname"),
                 data.get("name"),
                 data.get("patronymic", ""),
@@ -39,33 +58,15 @@ class Client:
             self.__init__(data, from_dict=True)
 
         else:
-            self._init_fields(*args)
+            self._init_full_fields(*args)
 
-    def _init_fields(self, surname: str, name: str, patronymic: str = "",
-                     phone: str = None, passport: str = None, email: str = None, comment: str = ""):
-        self._surname = self.validate_fio(surname, "Фамилия")
-        self._name = self.validate_fio(name, "Имя")
-        self._phone = self.validate_phone(phone)
+    def _init_full_fields(self, surname: str, name: str, patronymic: str = "",
+                          phone: str = None, passport: str = None, email: str = None, comment: str = ""):
 
-        self._patronymic = self.validate_fio(patronymic, "Отчество") if patronymic else ""
+        super()._init_short_fields(surname, name, patronymic, phone)
         self._passport = self.validate_passport(passport)
         self._email = self.validate_email(email) if email else None
         self._comment = comment or ""
-
-
-    @staticmethod
-    def validate_required(value, field_name: str):
-        if not value or not str(value).strip():
-            raise ValueError(f"Поле '{field_name}' не может быть пустым!")
-        return value
-
-    @staticmethod
-    def validate_fio(value: str, field_name: str):
-        value = Client.validate_required(value, field_name)
-        pattern = r"^[А-Яа-яЁёA-Za-z]+$"
-        if not re.match(pattern, value):
-            raise ValueError(f"{field_name} должно содержать только буквы!")
-        return value
 
     @staticmethod
     def validate_passport(passport: str):
@@ -78,15 +79,6 @@ class Client:
         return passport_clean
 
     @staticmethod
-    def validate_phone(phone: str):
-        phone = Client.validate_required(phone, "Телефон")
-        phone = str(phone)
-        pattern = r"^\+?\d{7,11}$"
-        if not re.match(pattern, phone):
-            raise ValueError("Телефон должен содержать только цифры и '+' (от 7 до 11 символов)!")
-        return phone
-
-    @staticmethod
     def validate_email(email: str):
         if not email:
             return None
@@ -96,33 +88,9 @@ class Client:
         if not re.match(pattern, email):
             raise ValueError("Некорректный формат email!")
         return email
-      
-    @property
-    def surname(self): 
-        return self._surname
-
-    @surname.setter
-    def surname(self, value: str):
-        self._surname = self.validate_fio(value, "Фамилия")
 
     @property
-    def name(self): 
-        return self._name
-
-    @name.setter
-    def name(self, value: str):
-        self._name = self.validate_fio(value, "Имя")
-
-    @property
-    def patronymic(self): 
-        return self._patronymic
-
-    @patronymic.setter
-    def patronymic(self, value: str):
-        self._patronymic = self.validate_fio(value, "Отчество") if value else ""
-
-    @property
-    def passport(self): 
+    def passport(self):
         return self._passport
 
     @passport.setter
@@ -130,15 +98,7 @@ class Client:
         self._passport = self.validate_passport(value)
 
     @property
-    def phone(self): 
-        return self._phone
-
-    @phone.setter
-    def phone(self, value: str):
-        self._phone = self.validate_phone(value)
-
-    @property
-    def email(self): 
+    def email(self):
         return self._email
 
     @email.setter
@@ -146,14 +106,14 @@ class Client:
         self._email = self.validate_email(value) if value else None
 
     @property
-    def comment(self): 
+    def comment(self):
         return self._comment
 
     @comment.setter
     def comment(self, value: str):
         self._comment = value or ""
 
-       @staticmethod
+    @staticmethod
     def read_clients_from_txt(path):
         clients = []
         if not os.path.exists(path):
@@ -186,8 +146,7 @@ class Client:
                 print(f"Ошибка при чтении JSON {path}: {e}")
         return clients
 
-    
-    def equals(self, other, by_all_fields=True):
+    def equals(self, other):
         if not isinstance(other, Client):
             return False
         return (
@@ -198,12 +157,12 @@ class Client:
                 self.phone == other.phone and
                 self.email == other.email and
                 self.comment == other.comment
-            )
+        )
 
     def __str__(self):
         return f"Client: {self.surname} {self.name} {self.patronymic}".strip()
 
     def __repr__(self):
         return (f"Client(surname='{self.surname}', name='{self.name}', "
-                f"patronymic='{self.patronymic}', passport='{self.passport}', "
-                f"phone='{self.phone}', email='{self.email}', comment='{self.comment}')")
+                f"patronymic='{self.patronymic}', phone='{self.phone}', "
+                f"passport='{self.passport}', email='{self.email}', comment='{self.comment}')")
