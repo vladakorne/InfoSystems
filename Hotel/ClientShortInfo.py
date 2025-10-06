@@ -3,19 +3,26 @@ import json
 
 class ClientShort:
     def __init__(self, *args, **kwargs):
+        self._id = None
+        self._surname = None
+        self._name = None
+        self._patronymic = None
+        self._phone = None
+
         if kwargs.get("from_string"):
             if not args:
                 raise ValueError("Для from_string необходимо передать строку первым аргументом")
             parts = [p.strip() for p in args[0].split(",")]
-            while len(parts) < 4:
+            while len(parts) < 5:
                 parts.append("")
-            self._init_short_fields(*parts[:4])
+            self._init_short_fields(*parts[:5])
 
         elif kwargs.get("from_dict"):
             if not args or not isinstance(args[0], dict):
                 raise ValueError("Для from_dict необходимо передать dict первым аргументом")
             data = args[0]
             self._init_short_fields(
+                data.get("id"),
                 data.get("surname"),
                 data.get("name"),
                 data.get("patronymic", ""),
@@ -37,7 +44,8 @@ class ClientShort:
         else:
             self._init_short_fields(*args)
 
-    def _init_short_fields(self, surname: str, name: str, patronymic: str = "", phone: str = None):
+    def _init_short_fields(self, id_value, surname: str, name: str, patronymic: str = "", phone: str = None):
+        self._id = self.validate_id(id_value)
         self._surname = self.validate_fio(surname, "Фамилия")
         self._name = self.validate_fio(name, "Имя")
         self._phone = self.validate_phone(phone)
@@ -65,6 +73,26 @@ class ClientShort:
         if not re.match(pattern, phone):
             raise ValueError("Телефон должен содержать только цифры и '+' (от 7 до 11 символов)!")
         return phone
+
+    @staticmethod
+    def validate_id(id_value):
+        if id_value is None:
+            raise ValueError("ID не может быть пустым!")
+        try:
+            id_int = int(id_value)
+            if id_int < 0:
+                raise ValueError("ID не может быть отрицательным числом!")
+            return id_int
+        except (ValueError, TypeError):
+            raise ValueError("ID должен быть неотрицательным целым числом!")
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        self._id = self.validate_id(value)
 
     @property
     def surname(self):
@@ -101,8 +129,7 @@ class ClientShort:
     def __str__(self):
         initials = f"{self.name[0]}." if self.name else ""
         patronymic_initial = f"{self.patronymic[0]}." if self.patronymic else ""
-        return f"ClientShort: {self.surname} {initials}{patronymic_initial}, {self.phone}"
+        return f"ClientShort [ID: {self.id}]: {self.surname} {initials}{patronymic_initial}, {self.phone}"
 
     def __repr__(self):
-        return f"ClientShort(surname='{self.surname}', name='{self.name}', patronymic='{self.patronymic}', phone='{self.phone}')"
-
+        return f"ClientShort(id={self.id}, surname='{self.surname}', name='{self.name}', patronymic='{self.patronymic}', phone='{self.phone}')"
