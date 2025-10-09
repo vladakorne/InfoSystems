@@ -155,7 +155,6 @@ class Client(ClientShort):
         if not isinstance(other, Client):
             return False
         return (
-                self.id == other.id and
                 self.surname == other.surname and
                 self.name == other.name and
                 self.patronymic == other.patronymic and
@@ -172,3 +171,92 @@ class Client(ClientShort):
         return (f"Client(id={self.id}, surname='{self.surname}', name='{self.name}', "
                 f"patronymic='{self.patronymic}', phone='{self.phone}', "
                 f"passport='{self.passport}', email='{self.email}', comment='{self.comment}')")
+
+class Client_rep_json:
+    def __init__(self, path):
+        self.path = path
+        self.clients = self.read_all()
+
+    # a
+    def read_all(self):
+        if not os.path.exists(self.path):
+            return []
+        with open(self.path, "r", encoding="utf-8") as f:
+            try:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    data = [data]
+                return [Client(d, from_dict=True) for d in data]
+            except json.JSONDecodeError:
+                return []
+
+    # b
+    def write_all(self):
+        data = [
+            {
+                "id": c.id,
+                "surname": c.surname,
+                "name": c.name,
+                "patronymic": c.patronymic,
+                "phone": c.phone,
+                "passport": c.passport,
+                "email": c.email,
+                "comment": c.comment
+            }
+            for c in self.clients
+        ]
+        with open(self.path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+
+    # c
+    def get_by_id(self, client_id):
+        for client in self.clients:
+            if client.id == client_id:
+                return client
+        return None
+
+    # d
+    def get_k_n_short_list(self, k, n):
+        start = (n - 1) * k
+        end = start + k
+        slice_clients = self.clients[start:end]
+        return [
+            ClientShort(c.id, c.surname, c.name, c.patronymic, c.phone)
+            for c in slice_clients
+        ]
+
+    # e
+    def sort_by_surname(self):
+        self.clients.sort(key=lambda c: c.surname)
+        self.write_all()
+
+    # f
+    def add_client(self, client: Client):
+        new_id = max((c.id for c in self.clients), default=0) + 1
+        client.id = new_id
+        self.clients.append(client)
+        self.write_all()
+        return new_id
+
+    # g
+    def replace_by_id(self, client_id, new_client: Client):
+        for i, client in enumerate(self.clients):
+            if client.id == client_id:
+                new_client.id = client_id
+                self.clients[i] = new_client
+                self.write_all()
+                return True
+        raise ValueError(f"Клиент с ID {client_id} не найден")
+
+    # h
+    def delete_by_id(self, client_id):
+        for i, client in enumerate(self.clients):
+            if client.id == client_id:
+                del self.clients[i]
+                self.write_all()
+                return True
+        raise ValueError(f"Клиент с ID {client_id} не найден")
+
+    # i
+    def get_count(self):
+        return len(self.clients)
