@@ -1,0 +1,36 @@
+import json
+import os
+from ClientRepository import ClientRepository
+from ClientBase import Client
+
+class Client_rep_json(ClientRepository):
+    # a
+    def read_all(self):
+        if not os.path.exists(self.path):
+            return []
+        with open(self.path, "r", encoding="utf-8") as f:
+            try:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    data = [data]
+                return [Client(d, from_dict=True) for d in data]
+            except json.JSONDecodeError:
+                return []
+
+    # b
+    def write_all(self):
+        data = [
+            {
+                "id": c.id,
+                "surname": c.surname,
+                "name": c.name,
+                "patronymic": c.patronymic,
+                "phone": c.phone,
+                "passport": c.passport,
+                "email": c.email,
+                "comment": c.comment
+            }
+            for c in self.clients
+        ]
+        with open(self.path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
