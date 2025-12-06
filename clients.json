@@ -1,0 +1,52 @@
+[
+    {
+        "id": 1,
+        "surname": "А",
+        "name": "Иван",
+        "patronymic": "Иванович",
+        "phone": "+79991234567",
+        "passport": "1234567890",
+        "email": "ivanov@mail.ru",
+        "comment": "Постоянный клиент"
+    },
+    {
+        "id": 3,
+        "surname": "В",
+        "name": "Сергей",
+        "patronymic": "Петрович",
+        "phone": "+79993456789",
+        "passport": "3456789012",
+        "email": "sidorov@mail.ru",
+        "comment": "Новый клиент"
+    },
+    {
+        "id": 5,
+        "surname": "Г",
+        "name": "Дмитрий",
+        "patronymic": "Андреевич",
+        "phone": "+79995678901",
+        "passport": "5678901234",
+        "email": "vasiliev@mail.ru",
+        "comment": "Гость из Москвы"
+    },
+    {
+        "id": 4,
+        "surname": "Д",
+        "name": "Ольга",
+        "patronymic": "Владимировна",
+        "phone": "+79994567890",
+        "passport": "4567890123",
+        "email": "kuznetsova@mail.ru",
+        "comment": "Регулярный клиент"
+    },
+    {
+        "id": 2,
+        "surname": "Б",
+        "name": "Владимир",
+        "patronymic": "",
+        "phone": "+79990003344",
+        "passport": "0000000000",
+        "email": "xxxxa@mail.ru",
+        "comment": ""
+    }
+]
