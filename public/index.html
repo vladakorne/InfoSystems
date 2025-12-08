@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление клиентами</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-view {
+            background-color: #2ecc71;
+            color: white;
+            padding: 6px 12px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .btn-view:hover {
+            background-color: #27ae60;
+        }
+
+        .btn-refresh {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .btn-refresh:hover {
+            background-color: #7f8c8d;
+        }
+
+        /* Таблица */
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #e0e0e0;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Фиксированные ширины столбцов */
+        th:nth-child(1), td:nth-child(1) { width: 80px; }  /* ID */
+        th:nth-child(2), td:nth-child(2) { width: 180px; } /* Фамилия */
+        th:nth-child(3), td:nth-child(3) { width: 150px; } /* Имя */
+        th:nth-child(4), td:nth-child(4) { width: 180px; } /* Отчество */
+        th:nth-child(5), td:nth-child(5) { width: 160px; } /* Телефон */
+        th:nth-child(6), td:nth-child(6) {
+            width: 120px;
+            text-align: center;
+        } /* Действия */
+
+        .muted {
+            color: #95a5a6;
+            font-style: italic;
+        }
+
+        .status-bar {
+            text-align: center;
+            padding: 10px;
+            color: #7f8c8d;
+            font-size: 14px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        /* Модальное окно */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .overlay.hidden {
+            display: none;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #95a5a6;
+        }
+
+        .modal-content {
+            padding: 20px;
+        }
+
+        .detail__item {
+            margin-bottom: 15px;
+        }
+
+        .detail__label {
+            font-weight: 600;
+            color: #7f8c8d;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .detail__value {
+            font-size: 15px;
+            color: #2c3e50;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* Отсутствие данных */
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .no-data-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Управление клиентами</h1>
+            <p class="subtitle">Система управления базой данных клиентов</p>
+        </header>
+
+        <div class="controls">
+            <div>
+                <button id="add-btn" class="btn btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                    </svg>
+                    Добавить клиента
+                </button>
+            </div>
+            <div>
+                <button id="refresh-btn" class="btn btn-refresh">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
+                    </svg>
+                    Обновить
+                </button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Фамилия</th>
+                        <th>Имя</th>
+                        <th>Отчество</th>
+                        <th>Телефон</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="client-table-body">
+                    <tr>
+                        <td colspan="6" class="no-data">
+                            <div class="no-data-icon">📋</div>
+                            <p>Загрузка данных клиентов...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="status-bar">
+            <span id="table-status">Подключение к серверу...</span>
+        </div>
+    </div>
+
+    <!-- Модальное окно детальной информации -->
+    <div id="detail-overlay" class="overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="overlay-title" class="modal-title">Детальная информация</h2>
+                <button id="close-overlay" class="modal-close">×</button>
+            </div>
+            <div class="modal-content" id="detail-content">
+                <div class="loading">
+                    <p>Загрузка данных...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="open-tab-btn" class="btn btn-primary">Открыть в новой вкладке</button>
+                <button id="close-overlay-btn" class="btn">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/ClientApiRepository.js"></script>
+    <script src="js/ClientTableView.js"></script>
+    <script src="js/ClientDetailView.js"></script>
+    <script src="js/UiController.js"></script>
+    <script>
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableBody = document.getElementById("client-table-body");
+            const statusElement = document.getElementById("table-status");
+            const refreshButton = document.getElementById("refresh-btn");
+            const overlayElement = document.getElementById("detail-overlay");
+            const detailContent = document.getElementById("detail-content");
+            const closeOverlay = document.getElementById("close-overlay");
+            const closeOverlayBtn = document.getElementById("close-overlay-btn");
+            const openTabButton = document.getElementById("open-tab-btn");
+            const overlayTitle = document.getElementById("overlay-title");
+
+            const repository = new ClientApiRepository("/api");
+            const tableView = new ClientTableView(tableBody, statusElement, refreshButton);
+            const detailView = new ClientDetailView(
+                overlayElement,
+                detailContent,
+                closeOverlay,
+                openTabButton,
+                overlayTitle
+            );
+
+            closeOverlayBtn.addEventListener('click', () => detailView.hide());
+
+            const controller = new UiController(repository, tableView, detailView);
+            controller.init();
+
+            // Пока не реализовано - кнопка добавления
+            document.getElementById('add-btn').addEventListener('click', () => {
+                alert('Добавление будет реализовано в следующих пунктах');
+            });
+        });
+    </script>
+</body>
+</html>

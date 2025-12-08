@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Детальная информация о клиенте</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+
+        header {
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 30px;
+            color: #3498db;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+
+        .detail-container {
+            margin: 30px 0;
+        }
+
+        .detail__item {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail__item:last-child {
+            border-bottom: none;
+        }
+
+        .detail__label {
+            font-weight: 600;
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail__value {
+            font-size: 18px;
+            color: #2c3e50;
+            line-height: 1.4;
+        }
+
+        .status-bar {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 16px;
+            font-style: italic;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background-color: #fee;
+            color: #c0392b;
+            padding: 20px;
+            border-radius: 6px;
+            border-left: 4px solid #c0392b;
+            margin: 20px 0;
+        }
+
+        .actions {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        .muted {
+            color: #95a5a6;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="currentColor"/>
+            </svg>
+            Назад к списку клиентов
+        </a>
+
+        <header>
+            <h1 id="detail-title">Клиент</h1>
+            <p class="subtitle" id="detail-status">Загрузка информации...</p>
+        </header>
+
+        <div id="detail-root">
+            <!-- Данные будут загружены через JS -->
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Загрузка данных клиента...</p>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button id="edit-btn" class="btn btn-primary">Редактировать</button>
+            <button id="delete-btn" class="btn btn-secondary">Удалить</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const titleElement = document.getElementById("detail-title");
+            const statusElement = document.getElementById("detail-status");
+            const detailRoot = document.getElementById("detail-root");
+            const editButton = document.getElementById("edit-btn");
+            const deleteButton = document.getElementById("delete-btn");
+
+            const params = new URLSearchParams(window.location.search);
+            const clientId = Number(params.get("id"));
+
+            if (!clientId) {
+                statusElement.textContent = "Не указан идентификатор клиента";
+                detailRoot.innerHTML = '<div class="error">Ошибка: ID клиента не указан в URL</div>';
+                editButton.disabled = true;
+                deleteButton.disabled = true;
+            } else {
+                loadClient(clientId);
+            }
+
+            editButton.addEventListener('click', () => {
+                if (clientId) {
+                    alert('Редактирование будет реализовано в следующих пунктах');
+                }
+            });
+
+            deleteButton.addEventListener('click', () => {
+                if (clientId) {
+                    alert('Удаление будет реализовано в следующих пунктах');
+                }
+            });
+
+            async function loadClient(id) {
+                try {
+                    const response = await fetch(`/api/clients/${id}`);
+                    if (!response.ok) {
+                        const payload = await response.json().catch(() => ({}));
+                        throw new Error(payload.error || "Не удалось загрузить карточку клиента");
+                    }
+                    const client = await response.json();
+                    renderClient(client);
+
+                    // Активируем кнопки
+                    editButton.disabled = false;
+                    deleteButton.disabled = false;
+                } catch (error) {
+                    statusElement.textContent = "Ошибка";
+                    detailRoot.innerHTML = `<div class="error">${error.message}</div>`;
+                    editButton.disabled = true;
+                    deleteButton.disabled = true;
+                }
+            }
+
+            function renderClient(client) {
+                titleElement.textContent = `${client.surname} ${client.name}`;
+                statusElement.textContent = `ID клиента: ${client.id}`;
+
+                detailRoot.innerHTML = `
+                    <div class="detail-container">
+                        ${detailBlock("ID", client.id)}
+                        ${detailBlock("Фамилия", client.surname)}
+                        ${detailBlock("Имя", client.name)}
+                        ${detailBlock("Отчество", client.patronymic || "—")}
+                        ${detailBlock("Телефон", client.phone)}
+                        ${detailBlock("Паспорт", client.passport || "—")}
+                        ${detailBlock("Email", client.email || "—")}
+                        ${detailBlock("Комментарий", client.comment || "—")}
+                    </div>
+                `;
+            }
+
+            function detailBlock(label, value) {
+                return `
+                    <div class="detail__item">
+                        <p class="detail__label">${label}</p>
+                        <p class="detail__value">${value}</p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
