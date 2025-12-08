@@ -98,6 +98,19 @@
             background-color: #7f8c8d;
         }
 
+        .btn-edit {
+            background-color: #f39c12;
+            color: white;
+            padding: 6px 12px;
+            font-size: 13px;
+            white-space: nowrap;
+            margin-left: 5px;
+        }
+
+        .btn-edit:hover {
+            background-color: #d68910;
+        }
+
         /* Таблица */
         .table-container {
             overflow-x: auto;
@@ -109,7 +122,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 800px;
+            min-width: 900px; /* Увеличиваем для 7 столбцов */
         }
 
         th {
@@ -141,7 +154,11 @@
         th:nth-child(6), td:nth-child(6) {
             width: 120px;
             text-align: center;
-        } /* Действия */
+        } /* Просмотр */
+        th:nth-child(7), td:nth-child(7) {
+            width: 100px;
+            text-align: center;
+        } /* Редактирование */
 
         .muted {
             color: #95a5a6;
@@ -248,6 +265,16 @@
             margin-bottom: 16px;
             opacity: 0.5;
         }
+
+        .loading {
+            padding: 20px;
+            text-align: center;
+            color: #7f8c8d;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -286,11 +313,12 @@
                         <th>Отчество</th>
                         <th>Телефон</th>
                         <th>Действия</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody id="client-table-body">
                     <tr>
-                        <td colspan="6" class="no-data">
+                        <td colspan="7" class="no-data">
                             <div class="no-data-icon">📋</div>
                             <p>Загрузка данных клиентов...</p>
                         </td>
@@ -303,7 +331,6 @@
             <span id="table-status">Подключение к серверу...</span>
         </div>
     </div>
-
 
     <!-- Модальное окно детальной информации -->
     <div id="detail-overlay" class="overlay hidden">
@@ -357,10 +384,10 @@
             const controller = new UiController(repository, tableView, detailView);
             controller.init();
 
-             addButton.addEventListener('click', () => {
-            window.location.href = 'add.html';
+            addButton.addEventListener('click', () => {
+                window.location.href = 'add.html';
+            });
         });
-    });
     </script>
 </body>
 </html>
