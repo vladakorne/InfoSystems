@@ -7,6 +7,7 @@ class ClientDetailView {
         this.titleElement = titleElement;
         this.currentId = null;
 
+
         this.closeButton.addEventListener("click", () => this.hide());
         this.overlayElement.addEventListener("click", (event) => {
             if (event.target === this.overlayElement) {

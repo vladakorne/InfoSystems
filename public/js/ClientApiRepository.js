@@ -1,5 +1,7 @@
 /**
  Репозиторий клиентов для взаимодействия с серверным API.
+ Реализует паттерн Наблюдатель (Observer) для уведомления компонентов
+ о получении данных и ошибках.
  */
 class ClientApiRepository {
     constructor(baseUrl = "/api") {
@@ -97,30 +99,5 @@ class ClientApiRepository {
                 context: { clientId }
             });
         }
-    }
-
-    /**
-     * Удаляет наблюдателя из указанного события
-     * @param {string} event - Событие
-     * @param {function} handler - Функция-обработчик для удаления
-     */
-    unsubscribe(event, handler) {
-        if (!this.observers[event]) {
-            console.warn(`Неизвестное событие для отписки: ${event}`);
-            return;
-        }
-        const index = this.observers[event].indexOf(handler);
-        if (index !== -1) {
-            this.observers[event].splice(index, 1);
-        }
-    }
-
-    /**
-     * Очищает всех наблюдателей для всех событий
-     */
-    clearObservers() {
-        Object.keys(this.observers).forEach(event => {
-            this.observers[event] = [];
-        });
     }
 }

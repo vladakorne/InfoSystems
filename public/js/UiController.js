@@ -7,6 +7,7 @@ class UiController {
         console.log('UiController создан');
     }
 
+
     init() {
         console.log('Начало инициализации UiController');
 

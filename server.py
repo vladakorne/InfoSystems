@@ -78,7 +78,6 @@ class ClientRequestHandler(SimpleHTTPRequestHandler):
         """Тише лог, чтобы не захламлять вывод."""
         return
 
-
 def run_server(host: str = "127.0.0.1", port: int = 8000) -> None:
     handler = partial(ClientRequestHandler, directory=str(PUBLIC_DIR))
     with HTTPServer((host, port), handler) as httpd:

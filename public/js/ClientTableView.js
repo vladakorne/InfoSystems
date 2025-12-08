@@ -8,6 +8,7 @@ class ClientTableView {
         console.log('ClientTableView инициализирован');
     }
 
+
     bindSelect(handler) {
         console.log('Установлен обработчик выбора клиента');
         this.onSelect = handler;

@@ -56,7 +56,7 @@ class ClientController:
         }
 
     def get_client(self, client_id: int) -> Optional[Dict[str, Any]]:
-        """ получает полную информацию о клиенте по id."""
+        """получает полную информацию о клиенте по id."""
         # получение клиента из репозитория
         client = self.repository.get_by_id(client_id)
 

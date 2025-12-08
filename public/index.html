@@ -327,40 +327,39 @@
     <script src="js/ClientTableView.js"></script>
     <script src="js/ClientDetailView.js"></script>
     <script src="js/UiController.js"></script>
-<script>
-    // Инициализация приложения
-    document.addEventListener('DOMContentLoaded', () => {
-        const tableBody = document.getElementById("client-table-body");
-        const statusElement = document.getElementById("table-status");
-        const refreshButton = document.getElementById("refresh-btn");
-        const addButton = document.getElementById("add-btn");  // Новая кнопка
-        const overlayElement = document.getElementById("detail-overlay");
-        const detailContent = document.getElementById("detail-content");
-        const closeOverlay = document.getElementById("close-overlay");
-        const closeOverlayBtn = document.getElementById("close-overlay-btn");
-        const openTabButton = document.getElementById("open-tab-btn");
-        const overlayTitle = document.getElementById("overlay-title");
+    <script>
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableBody = document.getElementById("client-table-body");
+            const statusElement = document.getElementById("table-status");
+            const refreshButton = document.getElementById("refresh-btn");
+            const overlayElement = document.getElementById("detail-overlay");
+            const detailContent = document.getElementById("detail-content");
+            const closeOverlay = document.getElementById("close-overlay");
+            const closeOverlayBtn = document.getElementById("close-overlay-btn");
+            const openTabButton = document.getElementById("open-tab-btn");
+            const overlayTitle = document.getElementById("overlay-title");
 
-        const repository = new ClientApiRepository("/api");
-        const tableView = new ClientTableView(tableBody, statusElement, refreshButton);
-        const detailView = new ClientDetailView(
-            overlayElement,
-            detailContent,
-            closeOverlay,
-            openTabButton,
-            overlayTitle
-        );
+            const repository = new ClientApiRepository("/api");
+            const tableView = new ClientTableView(tableBody, statusElement, refreshButton);
+            const detailView = new ClientDetailView(
+                overlayElement,
+                detailContent,
+                closeOverlay,
+                openTabButton,
+                overlayTitle
+            );
 
-        closeOverlayBtn.addEventListener('click', () => detailView.hide());
+            closeOverlayBtn.addEventListener('click', () => detailView.hide());
 
-        const controller = new UiController(repository, tableView, detailView);
-        controller.init();
+            const controller = new UiController(repository, tableView, detailView);
+            controller.init();
 
-        // Обработчик кнопки добавления
-        addButton.addEventListener('click', () => {
-            window.location.href = 'add.html';
+            // Пока не реализовано - кнопка добавления
+            document.getElementById('add-btn').addEventListener('click', () => {
+                alert('Добавление будет реализовано в следующих пунктах');
+            });
         });
-    });
-</script>
+    </script>
 </body>
 </html>
