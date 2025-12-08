@@ -304,6 +304,7 @@
         </div>
     </div>
 
+
     <!-- Модальное окно детальной информации -->
     <div id="detail-overlay" class="overlay hidden">
         <div class="modal">
@@ -333,6 +334,7 @@
             const tableBody = document.getElementById("client-table-body");
             const statusElement = document.getElementById("table-status");
             const refreshButton = document.getElementById("refresh-btn");
+            const addButton = document.getElementById("add-btn");
             const overlayElement = document.getElementById("detail-overlay");
             const detailContent = document.getElementById("detail-content");
             const closeOverlay = document.getElementById("close-overlay");
@@ -355,11 +357,10 @@
             const controller = new UiController(repository, tableView, detailView);
             controller.init();
 
-            // Пока не реализовано - кнопка добавления
-            document.getElementById('add-btn').addEventListener('click', () => {
-                alert('Добавление будет реализовано в следующих пунктах');
-            });
+             addButton.addEventListener('click', () => {
+            window.location.href = 'add.html';
         });
+    });
     </script>
 </body>
 </html>

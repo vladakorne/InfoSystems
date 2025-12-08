@@ -6,15 +6,16 @@ from typing import Any, Dict
 from urllib.parse import parse_qs, urlparse
 
 from ClientController import ClientController
+from AddClientController import AddClientController
 
 BASE_DIR = Path(__file__).parent
 PUBLIC_DIR = BASE_DIR / "public"
 
-
 class ClientRequestHandler(SimpleHTTPRequestHandler):
     """HTTP обработчик: отдает статику и API на основе контроллера."""
 
-    controller = ClientController()
+    client_controller = ClientController()
+    add_client_controller = AddClientController()
 
     def __init__(self, *args, directory: str | None = None, **kwargs) -> None:
         directory = directory or str(PUBLIC_DIR)
@@ -31,10 +32,24 @@ class ClientRequestHandler(SimpleHTTPRequestHandler):
             self._handle_client_detail(parsed)
             return
 
+        if parsed.path == "/api/clients/add/form":
+            self._handle_add_client_form()
+            return
+
         if parsed.path == "/":
             self.path = "/index.html"
 
         super().do_GET()
+
+    def do_POST(self) -> None:
+        parsed = urlparse(self.path)
+
+        if parsed.path == "/api/clients/add":
+            self._handle_add_client()
+            return
+
+        # Если POST запрос не обработан, возвращаем 404
+        self.send_error(404, "Endpoint not found")
 
     def _handle_clients_list(self, parsed) -> None:
         query = parse_qs(parsed.query)
@@ -42,8 +57,11 @@ class ClientRequestHandler(SimpleHTTPRequestHandler):
         page_size_raw = query.get("page_size", [None])[0]
         page_size = self._safe_int(page_size_raw) if page_size_raw is not None else None
 
-        payload = self.controller.get_short_clients(page_size=page_size, page=page)
-        self._send_json(payload)
+        try:
+            payload = self.client_controller.get_short_clients(page_size=page_size, page=page)
+            self._send_json(payload)
+        except Exception as e:
+            self._send_json({"error": f"Ошибка сервера: {str(e)}"}, status=500)
 
     def _handle_client_detail(self, parsed) -> None:
         try:
@@ -52,12 +70,42 @@ class ClientRequestHandler(SimpleHTTPRequestHandler):
             self._send_json({"error": "Некорректный идентификатор клиента"}, status=400)
             return
 
-        client = self.controller.get_client(client_id)
-        if client is None:
-            self._send_json({"error": "Клиент не найден"}, status=404)
-            return
+        try:
+            client = self.client_controller.get_client(client_id)
+            if client is None:
+                self._send_json({"error": "Клиент не найден"}, status=404)
+                return
 
-        self._send_json(client)
+            self._send_json(client)
+        except Exception as e:
+            self._send_json({"error": f"Ошибка сервера: {str(e)}"}, status=500)
+
+    def _handle_add_client_form(self) -> None:
+        """Возвращает пустую форму для добавления клиента."""
+        try:
+            form_data = self.add_client_controller.get_empty_client_form()
+            self._send_json(form_data)
+        except Exception as e:
+            self._send_json({"error": f"Ошибка сервера: {str(e)}"}, status=500)
+
+    def _handle_add_client(self) -> None:
+        """Обрабатывает добавление нового клиента."""
+        try:
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            client_data = json.loads(post_data.decode('utf-8'))
+
+            result = self.add_client_controller.add_client(client_data)
+
+            if result['success']:
+                self._send_json(result, status=201)
+            else:
+                self._send_json(result, status=400)
+
+        except json.JSONDecodeError:
+            self._send_json({"error": "Неверный формат JSON"}, status=400)
+        except Exception as e:
+            self._send_json({"error": f"Ошибка сервера: {str(e)}"}, status=500)
 
     def _safe_int(self, value: Any, default: int | None = None) -> int | None:
         try:
@@ -76,6 +124,7 @@ class ClientRequestHandler(SimpleHTTPRequestHandler):
 
     def log_message(self, format: str, *args) -> None:
         """Тише лог, чтобы не захламлять вывод."""
+        print(f"[{self.date_time_string()}] {format % args}")
         return
 
 def run_server(host: str = "127.0.0.1", port: int = 8000) -> None:
@@ -84,7 +133,6 @@ def run_server(host: str = "127.0.0.1", port: int = 8000) -> None:
         print(f"Сервер запущен: http://{host}:{port}")
         print("Ctrl+C для остановки")
         httpd.serve_forever()
-
 
 if __name__ == "__main__":
     run_server()
