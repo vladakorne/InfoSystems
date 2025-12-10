@@ -111,6 +111,30 @@
             background-color: #d68910;
         }
 
+        .btn-delete {
+            background-color: #e74c3c;
+            color: white;
+            padding: 6px 12px;
+            font-size: 13px;
+            white-space: nowrap;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-delete:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-delete:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
         /* Таблица */
         .table-container {
             overflow-x: auto;
@@ -152,13 +176,14 @@
         th:nth-child(4), td:nth-child(4) { width: 180px; } /* Отчество */
         th:nth-child(5), td:nth-child(5) { width: 160px; } /* Телефон */
         th:nth-child(6), td:nth-child(6) {
-            width: 120px;
+            width: 100px;
             text-align: center;
         } /* Просмотр */
         th:nth-child(7), td:nth-child(7) {
-            width: 100px;
+            width: 90px;
             text-align: center;
         } /* Редактирование */
+
 
         .muted {
             color: #95a5a6;
@@ -318,7 +343,7 @@
                 </thead>
                 <tbody id="client-table-body">
                     <tr>
-                        <td colspan="7" class="no-data">
+                        <td colspan="8" class="no-data">
                             <div class="no-data-icon">📋</div>
                             <p>Загрузка данных клиентов...</p>
                         </td>
@@ -387,6 +412,7 @@
             addButton.addEventListener('click', () => {
                 window.location.href = 'client_form.html';
             });
+
         });
     </script>
 </body>

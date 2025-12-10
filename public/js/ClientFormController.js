@@ -33,8 +33,6 @@ class ClientFormController {
         this.mode = mode;
         this.clientId = clientId;
 
-        console.log(`Инициализация ClientFormController в режиме: ${mode}`);
-
         // Находим DOM элементы
         this._findElements();
 
@@ -43,6 +41,9 @@ class ClientFormController {
 
         // Загружаем данные если нужно
         this._loadInitialData();
+
+        // Показываем кнопку удаления в режиме редактирования
+        this._toggleDeleteButton();
     }
 
     /**
@@ -78,13 +79,10 @@ class ClientFormController {
             window.location.href = 'index.html';
         });
 
-        // Обработка удаления (будет реализована в п.5)
+        // Обработка удаления
         deleteBtn.addEventListener('click', () => {
             if (this.clientId) {
-                if (confirm('Вы уверены, что хотите удалить этого клиента?')) {
-                    console.log('Удаление будет реализовано в пункте 5');
-                    // this._handleDelete();
-                }
+                this._handleDelete();
             }
         });
 
@@ -100,6 +98,62 @@ class ClientFormController {
             input.addEventListener('blur', () => this._validateField(input));
             input.addEventListener('input', () => this._clearFieldError(input));
         });
+    }
+
+    _toggleDeleteButton() {
+        const { deleteBtn } = this.elements;
+
+        // Показываем кнопку удаления только в режиме редактирования
+        if (this.mode === 'edit' && this.clientId) {
+            deleteBtn.classList.remove('hidden');
+        } else {
+            deleteBtn.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Обработка удаления клиента
+     * @private
+     */
+    async _handleDelete() {
+        if (!this.clientId) return;
+
+        // Подтверждение удаления
+        const confirmed = confirm('Вы уверены, что хотите удалить этого клиента? Это действие нельзя отменить.');
+
+        if (!confirmed) return;
+
+        this._resetMessages();
+        this._setLoading(true, 'Удаление клиента...');
+
+        try {
+            const response = await fetch(`/api/clients/${this.clientId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                this._showSuccess(result.message || 'Клиент успешно удален');
+
+                // Перенаправление на главную страницу через 2 секунды
+                this.redirectTimer = setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+
+            } else {
+                this._showError(result.message || 'Ошибка при удалении клиента');
+            }
+
+        } catch (error) {
+            console.error('Ошибка при удалении клиента:', error);
+            this._showError('Ошибка соединения с сервером');
+        } finally {
+            this._setLoading(false);
+        }
     }
 
     /**

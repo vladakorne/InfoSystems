@@ -15,13 +15,15 @@ class ClientController:
     """контроллер для операций с клиентами."""
 
     def __init__(self, repository: Optional[ClientRepDBAdapter] = None) -> None:
-        """ инициализация контроллера. """
-        self.repository: ClientRepDBAdapter = repository or ClientRepDBAdapter(ClientRepDB())
+        """инициализация контроллера."""
+        self.repository: ClientRepDBAdapter = repository or ClientRepDBAdapter(
+            ClientRepDB()
+        )
 
     def get_short_clients(
-            self, page_size: Optional[int] = None, page: int = 1
+        self, page_size: Optional[int] = None, page: int = 1
     ) -> Dict[str, Any]:
-        """ получает список клиентов с краткой информацией. """
+        """получает список клиентов с краткой информацией."""
         # гарантируем корректный номер страницы
         page = max(page, 1)
 
@@ -40,13 +42,15 @@ class ClientController:
         # преобразование в краткий формат
         short_list = []
         for client in data_slice:
-            short_list.append({
-                "id": client.id,
-                "surname": client.surname,
-                "name": client.name,
-                "patronymic": client.patronymic,
-                "phone": client.phone,
-            })
+            short_list.append(
+                {
+                    "id": client.id,
+                    "surname": client.surname,
+                    "name": client.name,
+                    "patronymic": client.patronymic,
+                    "phone": client.phone,
+                }
+            )
 
         return {
             "items": short_list,

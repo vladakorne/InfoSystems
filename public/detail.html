@@ -237,13 +237,57 @@
                 if (clientId) {
                     // Показываем подтверждение удаления
                     if (confirm('Вы уверены, что хотите удалить этого клиента?')) {
-                        // Удаление будет реализовано в пункте 5
-                        alert('Удаление будет реализовано в пункте 5');
-                        // Временный код для удаления:
-                        // deleteClient(clientId);
+                        deleteClient(clientId);
                     }
                 }
             });
+
+            async function deleteClient(id) {
+                try {
+                    deleteButton.disabled = true;
+                    deleteButton.innerHTML = '<div class="spinner" style="width: 16px; height: 16px; margin: 0 auto;"></div>';
+
+                    const response = await fetch(`/api/clients/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        // Показываем сообщение об успехе
+                        statusElement.textContent = "Клиент удален";
+                        detailRoot.innerHTML = `
+                            <div class="message message-success">
+                                <p>${result.message}</p>
+                                <p>Через 1 секунду вы будете перенаправлены на главную страницу...</p>
+                            </div>
+                        `;
+
+                        // Отключаем кнопки
+                        editButton.disabled = true;
+                        deleteButton.disabled = true;
+
+                        // Перенаправление через 3 секунды
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 3000);
+
+                    } else {
+                        alert(result.message || 'Ошибка при удалении клиента');
+                        deleteButton.disabled = false;
+                        deleteButton.textContent = 'Удалить';
+                    }
+
+                } catch (error) {
+                    console.error('Ошибка при удалении:', error);
+                    alert('Ошибка соединения с сервером');
+                    deleteButton.disabled = false;
+                    deleteButton.textContent = 'Удалить';
+                }
+            }
 
             async function loadClient(id) {
                 try {
