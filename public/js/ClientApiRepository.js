@@ -1,8 +1,3 @@
-/**
- Репозиторий клиентов для взаимодействия с серверным API.
- Реализует паттерн Наблюдатель (Observer) для уведомления компонентов
- о получении данных и ошибках.
- */
 class ClientApiRepository {
     constructor(baseUrl = "/api") {
         this.baseUrl = baseUrl;
@@ -13,11 +8,6 @@ class ClientApiRepository {
         };
     }
 
-    /**
-     * Регистрирует наблюдателя для указанного события
-     * @param {string} event - Событие для подписки
-     * @param {function} handler - Функция-обработчик
-     */
     subscribe(event, handler) {
         if (!this.observers[event]) {
             console.warn(`Неизвестное событие: ${event}`);
@@ -26,11 +16,6 @@ class ClientApiRepository {
         this.observers[event].push(handler);
     }
 
-    /**
-     * Уведомляет всех наблюдателей о событии
-     * @param {string} event - Тип события
-     * @param {any} data - Данные для передачи наблюдателям
-     */
     _notify(event, data) {
         if (!this.observers[event]) {
             console.warn(`Попытка уведомить неизвестное событие: ${event}`);
@@ -39,11 +24,6 @@ class ClientApiRepository {
         this.observers[event].forEach(handler => handler(data));
     }
 
-    /**
-     * Загружает список клиентов с пагинацией
-     * @param {number} page - Номер страницы (начинается с 1)
-     * @param {number|null} pageSize - Количество клиентов на странице
-     */
     async loadClients(page = 1, pageSize = null) {
         try {
             console.log(`Загрузка клиентов, страница ${page}...`);
@@ -73,10 +53,6 @@ class ClientApiRepository {
         }
     }
 
-    /**
-     * Загружает детальную информацию о клиенте по ID
-     * @param {number} clientId - ID клиента
-     */
     async loadClientDetails(clientId) {
         try {
             console.log(`Загрузка деталей клиента ${clientId}...`);

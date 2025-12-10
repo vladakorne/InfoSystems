@@ -15,14 +15,13 @@ class EditClientController:
 
     def __init__(self, repository: Optional[ClientRepDBAdapter] = None) -> None:
         self.repository: ClientRepDBAdapter = repository or ClientRepDBAdapter(ClientRepDB())
-        print("EditClientController инициализирован")
 
     def get_client_for_edit(self, client_id: int) -> Optional[Dict[str, Any]]:
         """Получает данные клиента для редактирования."""
-        print(f"Получение клиента {client_id} для редактирования...")
+        # print(f"Получение клиента {client_id} для редактирования...")
         try:
             client = self.repository.get_by_id(client_id)
-            print(f"Клиент из репозитория: {client}")
+            # print(f"Клиент из репозитория: {client}")
 
             if client:
                 result = {
@@ -35,7 +34,6 @@ class EditClientController:
                     'email': client.email or '',
                     'comment': client.comment or ''
                 }
-                print(f"Сформированные данные для формы: {result}")
                 return result
             else:
                 print(f"Клиент {client_id} не найден в репозитории")
@@ -152,8 +150,6 @@ class EditClientController:
 
             # Обновляем клиента через репозиторий
             success = self.repository.update_client(client_id, repo_data)
-
-            print(f"Результат обновления в репозитории: {success}")
 
             if success:
                 return {

@@ -164,6 +164,15 @@
             background-color: #7f8c8d;
         }
 
+        .btn-warning {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #d68910;
+        }
+
         .muted {
             color: #95a5a6;
             font-style: italic;
@@ -193,7 +202,7 @@
         </div>
 
         <div class="actions">
-            <button id="edit-btn" class="btn btn-primary">Редактировать</button>
+            <button id="edit-btn" class="btn btn-warning">Редактировать</button>
             <button id="delete-btn" class="btn btn-secondary">Удалить</button>
         </div>
     </div>
@@ -220,13 +229,19 @@
 
             editButton.addEventListener('click', () => {
                 if (clientId) {
-                    alert('Редактирование будет реализовано в следующих пунктах');
+                    window.location.href = `client_form.html?id=${clientId}`;
                 }
             });
 
             deleteButton.addEventListener('click', () => {
                 if (clientId) {
-                    alert('Удаление будет реализовано в следующих пунктах');
+                    // Показываем подтверждение удаления
+                    if (confirm('Вы уверены, что хотите удалить этого клиента?')) {
+                        // Удаление будет реализовано в пункте 5
+                        alert('Удаление будет реализовано в пункте 5');
+                        // Временный код для удаления:
+                        // deleteClient(clientId);
+                    }
                 }
             });
 
@@ -251,6 +266,8 @@
                 }
             }
 
+
+
             function renderClient(client) {
                 titleElement.textContent = `${client.surname} ${client.name}`;
                 statusElement.textContent = `ID клиента: ${client.id}`;
@@ -268,7 +285,6 @@
                     </div>
                 `;
             }
-
 
             function detailBlock(label, value) {
                 return `

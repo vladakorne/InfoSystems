@@ -4,10 +4,7 @@ class ClientTableView {
         this.statusElement = statusElement;
         this.refreshButton = refreshButton;
         this.onSelect = () => {};
-
-        console.log('ClientTableView инициализирован');
     }
-
 
     bindSelect(handler) {
         console.log('Установлен обработчик выбора клиента');
@@ -32,7 +29,7 @@ class ClientTableView {
         if (items.length === 0) {
             const row = document.createElement("tr");
             const cell = document.createElement("td");
-            cell.colSpan = 6;
+            cell.colSpan = 7;
             cell.innerHTML = `
                 <div class="no-data">
                     <div class="no-data-icon">📭</div>
@@ -47,7 +44,6 @@ class ClientTableView {
                 const row = document.createElement("tr");
                 row.dataset.id = item.id;
 
-                // Отображаем полное отчество, а не только инициалы
                 const patronymic = item.patronymic || "";
 
                 row.innerHTML = `
@@ -64,14 +60,30 @@ class ClientTableView {
                             Просмотр
                         </button>
                     </td>
+                    <td>
+                        <button class="btn-edit" data-id="${item.id}">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+                            </svg>
+                            Редакт.
+                        </button>
+                    </td>
                 `;
 
-                // Добавляем обработчик на кнопку
+                // Обработчик кнопки просмотра
                 const viewButton = row.querySelector('.btn-view');
                 viewButton.addEventListener('click', (e) => {
                     e.stopPropagation();
                     console.log('Клик по кнопке просмотра клиента ID:', item.id);
                     this.onSelect(item.id);
+                });
+
+                // Обработчик кнопки редактирования - ОБНОВЛЯЕМ ССЫЛКУ
+                const editButton = row.querySelector('.btn-edit');
+                editButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    console.log('Клик по кнопке редактирования клиента ID:', item.id);
+                    window.location.href = `client_form.html?id=${item.id}`;
                 });
 
                 this.bodyElement.appendChild(row);
