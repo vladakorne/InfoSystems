@@ -1,118 +1,139 @@
+/**
+ * Репозиторий для работы с API клиентов с паттерном Наблюдатель
+ */
 class ClientApiRepository {
     constructor(baseUrl = "/api") {
         this.baseUrl = baseUrl;
-        this.observers = {
-            clientsLoaded: [],    // наблюдатели за загрузкой списка клиентов
-            clientLoaded: [],     // наблюдатели за загрузкой детальной информации
-            clientDeleted: [],    // наблюдатели за удалением
-            errorOccurred: []     // наблюдатели за ошибками
+        this.subscribers = {
+            list: [],
+            detail: [],
+            deleted: [],
+            error: [],
+            filtersChanged: []  // Новое событие для изменения фильтров
         };
+        this.currentFilters = {};
+        this.currentSort = '';
+        this.currentSortOrder = 'asc';
     }
 
     subscribe(event, handler) {
-        if (!this.observers[event]) {
-            console.warn(`Неизвестное событие: ${event}`);
-            return;
+        if (this.subscribers[event]) {
+            this.subscribers[event].push(handler);
         }
-        this.observers[event].push(handler);
     }
 
-    _notify(event, data) {
-        if (!this.observers[event]) {
-            console.warn(`Попытка уведомить неизвестное событие: ${event}`);
-            return;
-        }
-        this.observers[event].forEach(handler => handler(data));
+    notify(event, payload) {
+        (this.subscribers[event] || []).forEach((handler) => handler(payload));
     }
 
-    async loadClients(page = 1, pageSize = null) {
+    async loadList(page = 1, filters = null, sort = null, sortOrder = null) {
         try {
-            console.log(`Загрузка клиентов, страница ${page}...`);
-            let url = `${this.baseUrl}/clients?page=${page}`;
-            if (pageSize !== null) {
-                url += `&page_size=${pageSize}`;
+            if (filters !== null) {
+                this.currentFilters = filters;
+            }
+            if (sort !== null) {
+                this.currentSort = sort;
+            }
+            if (sortOrder !== null) {
+                this.currentSortOrder = sortOrder || 'asc';
             }
 
-            const response = await fetch(url);
+            const params = new URLSearchParams({ page });
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `Ошибка сервера: ${response.status}`);
-            }
-
-            const clientsData = await response.json();
-            console.log('Получены данные клиентов:', clientsData);
-            this._notify('clientsLoaded', clientsData);
-
-        } catch (error) {
-            console.error('Ошибка при загрузке списка клиентов:', error);
-            this._notify('errorOccurred', {
-                type: 'clients_list',
-                message: error.message,
-                context: { page, pageSize }
-            });
-        }
-    }
-
-    async loadClientDetails(clientId) {
-        try {
-            console.log(`Загрузка деталей клиента ${clientId}...`);
-            const response = await fetch(`${this.baseUrl}/clients/${clientId}`);
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `Клиент с ID ${clientId} не найден`);
-            }
-
-            const clientDetails = await response.json();
-            console.log('Получены детали клиента:', clientDetails);
-            this._notify('clientLoaded', clientDetails);
-
-        } catch (error) {
-            console.error(`Ошибка при загрузке клиента ${clientId}:`, error);
-            this._notify('errorOccurred', {
-                type: 'client_details',
-                message: error.message,
-                context: { clientId }
-            });
-        }
-    }
-
-     async deleteClient(clientId) {
-        try {
-            console.log(`Удаление клиента ${clientId}...`);
-            const response = await fetch(`${this.baseUrl}/clients/${clientId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
+            // Добавляем параметры фильтрации
+            Object.entries(this.currentFilters).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && value !== "") {
+                    params.append(key, value);
                 }
             });
 
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || `Ошибка сервера: ${response.status}`);
+            // Добавляем параметры сортировки
+            if (this.currentSort) {
+                params.append("sort", this.currentSort);
+                params.append("sort_order", this.currentSortOrder);
             }
 
-            console.log('Клиент успешно удален:', result);
-
-            // Уведомляем об успешном удалении
-            this._notify('clientDeleted', {
-                clientId: clientId,
-                message: result.message,
-                success: true
-            });
-
-            return result;
-
+            const response = await fetch(`${this.baseUrl}/clients?${params.toString()}`);
+            if (!response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                throw new Error(payload.error || "Не удалось загрузить список клиентов");
+            }
+            const data = await response.json();
+            this.notify("list", data);
+            return data;
         } catch (error) {
-            console.error(`Ошибка при удалении клиента ${clientId}:`, error);
-            this._notify('errorOccurred', {
-                type: 'client_delete',
-                message: error.message,
-                context: { clientId }
-            });
+            this.notify("error", { message: error.message });
             throw error;
         }
+    }
+
+    async loadClientDetail(clientId) {
+        try {
+            const response = await fetch(`${this.baseUrl}/clients/${clientId}`);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error("Клиент не найден");
+                }
+                throw new Error("Не удалось загрузить данные клиента");
+            }
+            const data = await response.json();
+            this.notify("detail", data);
+            return data;
+        } catch (error) {
+            this.notify("error", { message: error.message });
+            throw error;
+        }
+    }
+
+    async deleteClient(clientId) {
+        try {
+            const response = await fetch(`${this.baseUrl}/clients/${clientId}`, {
+                method: "DELETE",
+            });
+            if (!response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                throw new Error(payload.error || "Не удалось удалить клиента");
+            }
+            const data = await response.json();
+            this.notify("deleted", { id: clientId, ...data });
+            return data;
+        } catch (error) {
+            this.notify("error", { message: error.message });
+            throw error;
+        }
+    }
+
+    // Новый метод для применения фильтров без смены страницы
+    applyFilters(filters = null, sort = null, sortOrder = null) {
+        this.currentFilters = filters || {};
+        this.currentSort = sort || '';
+        this.currentSortOrder = sortOrder || 'asc';
+        this.notify("filtersChanged", {
+            filters: this.currentFilters,
+            sort: this.currentSort,
+            sortOrder: this.currentSortOrder
+        });
+        return this.loadList(1); // Возвращаемся на первую страницу
+    }
+
+    // Новый метод для сброса фильтров
+    resetFilters() {
+        this.currentFilters = {};
+        this.currentSort = '';
+        this.currentSortOrder = 'asc';
+        this.notify("filtersChanged", {
+            filters: {},
+            sort: '',
+            sortOrder: 'asc'
+        });
+        return this.loadList(1);
+    }
+
+    getCurrentFilters() {
+        return {
+            filters: this.currentFilters,
+            sort: this.currentSort,
+            sortOrder: this.currentSortOrder
+        };
     }
 }

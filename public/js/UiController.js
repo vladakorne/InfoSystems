@@ -1,53 +1,104 @@
+/**
+ * Основной контроллер пользовательского интерфейса
+ */
 class UiController {
-    constructor(repository, tableView, detailView) {
+    constructor(repository, tableView, detailView, addButton = null) {
         this.repository = repository;
         this.tableView = tableView;
         this.detailView = detailView;
-
-        //console.log('UiController создан');
+        this.addButton = addButton;
+        this.addWindow = null;
+        this.refreshRequested = false;
     }
 
-
     init() {
-        //console.log('Начало инициализации UiController');
+        this._bindRepositoryEvents();
+        this._bindTableViewEvents();
+        this._bindDetailViewEvents();
 
-        // Привязываем обработчик выбора клиента
-        this.tableView.bindSelect((id) => {
-            //console.log('Выбран клиент с ID:', id);
-            this.detailView.showLoading(id);
-            this.repository.loadClientDetails(id);
-        });
+        if (this.addButton) {
+            this.addButton.addEventListener("click", () => this._openAddWindow());
+        }
 
-        // Привязываем обработчик обновления
-        this.tableView.bindRefresh(() => {
-            //console.log('Запрос на обновление списка клиентов');
-            this.repository.loadClients();
-        });
+        this.refresh();
+    }
 
-        // Подписываемся на события репозитория
-        this.repository.subscribe("clientsLoaded", (payload) => {
-            //console.log('Событие: clientsLoaded', payload);
-            this.tableView.render(payload);
-        });
+    applyFilters(filters, sort, sortOrder) {
+        this.repository.loadList(1, filters, sort, sortOrder);
+        this.refreshRequested = true;
+    }
 
-        this.repository.subscribe("clientLoaded", (client) => {
-            //console.log('Событие: clientLoaded', client);
-            this.detailView.show(client);
-        });
+    resetFilters() {
+        this.repository.resetFilters();
+        this.refreshRequested = true;
+    }
 
-        this.repository.subscribe("errorOccurred", (error) => {
-            //console.error('Событие: errorOccurred', error);
-            if (error.type === 'clients_list') {
-                this.tableView.showStatus(`Ошибка: ${error.message}`);
-            } else {
-                this.detailView.showError(error.message);
+    _bindRepositoryEvents() {
+        this.repository.subscribe("list", (data) => {
+            this.tableView.render(data);
+            if (this.refreshRequested) {
+                this.tableView.showSuccess("Данные обновлены");
+                this.refreshRequested = false;
             }
         });
 
-        // Загружаем начальные данные
-        //console.log('Запуск загрузки клиентов...');
-        this.repository.loadClients();
+        this.repository.subscribe("detail", (client) => {
+            // ВАЖНО: вызываем show() вместо render()
+            this.detailView.show(client);
+        });
 
-        //console.log('UiController инициализирован успешно');
+        this.repository.subscribe("deleted", (payload) => {
+            this.tableView.showSuccess(payload.message || "Клиент удален");
+            this.refresh();
+        });
+
+        this.repository.subscribe("error", (payload) => {
+            this.tableView.showError(payload.message);
+        });
+
+        // Обработка изменения фильтров
+        this.repository.subscribe("filtersChanged", (payload) => {
+            console.log("Фильтры изменены:", payload);
+        });
+    }
+
+    _bindTableViewEvents() {
+        this.tableView.onViewClick = (clientId) => {
+            this.repository.loadClientDetail(clientId);
+        };
+
+        this.tableView.onEditClick = (clientId) => {
+            window.location.href = `client_form.html?id=${clientId}`;
+        };
+
+        this.tableView.onDeleteClick = (clientId, clientName) => {
+            if (confirm(`Вы уверены, что хотите удалить клиента "${clientName}"?`)) {
+                this.repository.deleteClient(clientId);
+            }
+        };
+
+        this.tableView.onRefreshClick = () => {
+            this.refresh();
+        };
+    }
+
+    _bindDetailViewEvents() {
+        this.detailView.onClose = () => {
+            this.detailView.hide();
+        };
+
+        this.detailView.onOpenTab = (clientId) => {
+            window.open(`detail.html?id=${clientId}`, "_blank");
+        };
+    }
+
+    _openAddWindow() {
+        window.location.href = "client_form.html";
+    }
+
+    refresh() {
+        this.repository.loadList(1);
+        this.tableView.showLoading();
+        this.refreshRequested = true;
     }
 }
