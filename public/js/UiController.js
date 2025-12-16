@@ -7,7 +7,7 @@ class UiController {
         this.tableView = tableView;
         this.detailView = detailView;
         this.addButton = addButton;
-        this.addWindow = null;
+
         this.refreshRequested = false;
     }
 
@@ -43,7 +43,6 @@ class UiController {
         });
 
         this.repository.subscribe("detail", (client) => {
-            // ВАЖНО: вызываем show() вместо render()
             this.detailView.show(client);
         });
 

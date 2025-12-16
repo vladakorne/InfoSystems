@@ -3,16 +3,18 @@
 вся прикладная логика вынесена сюда и использует репозиторий как модель.
 """
 
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, Optional
 
 from ClientRepDBAdapter import ClientRepDBAdapter
 from ClientRepDB import ClientRepDB
 from ClientRepDBDecorator import (
-    SurnameFilter, NameFilter, PatronymicFilter, PhoneFilter,
-    ClientRepDBDecorator, ClientSorter
+    SurnameFilter,
+    NameFilter,
+    PatronymicFilter,
+    PhoneFilter,
+    ClientRepDBDecorator,
+    ClientSorter,
 )
-from ClientBase import Client
-from ClientShortInfo import ClientShort
 
 
 class ClientController:
@@ -20,21 +22,23 @@ class ClientController:
 
     def __init__(self, repository: Optional[ClientRepDBAdapter] = None) -> None:
         """инициализация контроллера."""
-        self.repository: ClientRepDBAdapter = repository or ClientRepDBAdapter(
-            ClientRepDB()
+        self.repository: ClientRepDBAdapter = (
+            repository
+            or ClientRepDBAdapter(  # опциаональный параметр для внедрения зависимости
+                ClientRepDB()  # если репозиторий не передан. то создается стандтарный
+            )
         )
 
-    def _apply_filters(self, filters: Dict[str, Any], sort_by: Optional[str], sort_order: Optional[str]) -> ClientRepDBDecorator:
-        """
-        Оборачивает репозиторий декоратором и применяет фильтры/сортировку.
-        """
-        # Получаем базовый репозиторий БД из адаптера
-        base_repo = self.repository._db_repo
+    def apply_filters(
+        self, filters: Dict[str, Any], sort_by: Optional[str], sort_order: Optional[str]
+    ) -> ClientRepDBDecorator:
+        """Динамически добавляет функциональность (фильтры, сортировку) к объекту, не меняя его структуру."""
 
-        # Создаем декоратор
-        decorated = ClientRepDBDecorator(base_repo)
+        base_repo = (self.repository._db_repo)  # получаем базовый репозиторий БД из адаптера для декорирования
 
-        # Применяем фильтры
+        decorated = ClientRepDBDecorator(base_repo)  # создает экземпляр декоратора, оборачивающего базовый репозиторий
+
+        # фильтры добавляются только если параметры переданы
         if filters:
             surname_prefix = filters.get("surname_prefix")
             if surname_prefix:
@@ -52,23 +56,23 @@ class ClientController:
             if phone_substring:
                 decorated.add_filter(PhoneFilter(phone_substring))
 
-        # Применяем сортировку
+        # сортировкa
         if sort_by:
-            sorters = {
+            sorters = {  # словарь маппинга имени поля на фабричный метод сортировки
                 "surname": ClientSorter.by_surname,
                 "name": ClientSorter.by_name,
                 "patronymic": ClientSorter.by_patronymic,
                 "phone": ClientSorter.by_phone,
                 "id": ClientSorter.by_id,
             }
-            sorter_factory = sorters.get(sort_by)
+            sorter_factory = sorters.get(sort_by)  # получаем фабрику по имени поля
             if sorter_factory:
-                # Определяем направление сортировки
-                reverse = sort_order == "desc"
-                sorter = sorter_factory(reverse)
-                decorated.set_sorter(sorter, reverse)
+                # определяем направление сортировки
+                reverse = sort_order == "desc"  # (asc/desc)
+                sorter = sorter_factory(reverse)  # каждая сортировка - отдельная стратегия
+                decorated.set_sorter(sorter, reverse)  # применяем к декоратору
 
-        return decorated
+        return decorated  # возвращаем декорированный репозиторий
 
     def get_short_clients(
         self,
@@ -76,36 +80,36 @@ class ClientController:
         page: int = 1,
         filters: Optional[Dict[str, Any]] = None,
         sort_by: Optional[str] = None,
-        sort_order: Optional[str] = None
-    ) -> Dict[str, Any]:
+        sort_order: Optional[str] = None,
+    ) -> Dict[
+        str, Any
+    ]:  # метод получения списка клиентов с поддержкой: пагинации, фильтрации и сортировки
         """получает список клиентов с краткой информацией."""
-        # Гарантируем корректный номер страницы
-        page = max(page, 1)
-        filters = filters or {}
-        sort_order = sort_order or "asc"  # По умолчанию сортировка по возрастанию
 
-        # Выбираем репозиторий с учетом фильтров и сортировки
-        need_decorator = bool(filters) or sort_by is not None
+        # гарантируем корректный номер страницы
+        page = max(page, 1) # страница не может быть < 1
+        filters = filters or {} # гарантируем, что filters - словарь (фильтры не установлены)
+        sort_order = sort_order or "asc"  # по умолчанию сортировка по возрастанию
+
+        # выбираем репозиторий с учетом фильтров и сортировки
+        need_decorator = bool(filters) or sort_by is not None # нужен ли декоратор (если есть фильтры или сортировка)
         if need_decorator:
-            repo_to_use = self._apply_filters(filters, sort_by, sort_order)
+            repo_to_use = self.apply_filters(filters, sort_by, sort_order) # создаем декорированный репозиторий через apply_filters
             total = repo_to_use.get_count()
         else:
-            repo_to_use = self.repository
-            total = repo_to_use.get_count()
+            repo_to_use = self.repository # используем обычный репозиторий
+            total = repo_to_use.get_count() # получаем общее количество (уже отфильтрованных) записей
 
         # Обработка пагинации
         if page_size is None or page_size <= 0:
-            # Все записи, если пагинация отключена
+            # если page_size не задан или ≤0: возвращаем все записи
             data_slice = repo_to_use.read_all()
             page_size = total if total > 0 else 1
         else:
-            # Данные для конкретной страницы
-            if need_decorator:
-                data_slice = repo_to_use.get_k_n_short_list(page_size, page)
-            else:
-                data_slice = repo_to_use.get_k_n_short_list(page_size, page)
+            data_slice = repo_to_use.get_k_n_short_list(page_size, page)  # получаем срез через get_k_n_short_list
 
-        # Преобразование в краткий формат
+        # преобразует объекты ClientShort в словари для JSON-сериализации
+        # подготовка данных для передачи по сети
         short_list = []
         for client in data_slice:
             short_list.append(
@@ -118,23 +122,24 @@ class ClientController:
                 }
             )
 
+        # формируем ответ
         return {
-            "items": short_list,
-            "total": total,
+            "items": short_list, # данные клиента
+            "total": total, # кол-во после фильтрации
             "page": page,
-            "page_size": page_size,
+            "page_size": page_size, # даннные пагинации
             "filters_applied": bool(filters),
             "sort_by": sort_by,
-            "sort_order": sort_order
+            "sort_order": sort_order, # инфа о сортировке
         }
 
     def get_client(self, client_id: int) -> Optional[Dict[str, Any]]:
         """получает полную информацию о клиенте по id."""
-        # Получение клиента из репозитория
-        client = self.repository.get_by_id(client_id)
 
-        if client:
-            # Преобразование в словарь с полными данными
+        client = self.repository.get_by_id(client_id) # получение клиента из репозитория
+
+        if client: # если клиент найден, преобразует его в словарь с всеми полями
+            # преобразование в словарь с полными данными
             return {
                 "id": client.id,
                 "surname": client.surname,

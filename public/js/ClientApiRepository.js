@@ -9,7 +9,7 @@ class ClientApiRepository {
             detail: [],
             deleted: [],
             error: [],
-            filtersChanged: []  // Новое событие для изменения фильтров
+            filtersChanged: []
         };
         this.currentFilters = {};
         this.currentSort = '';
@@ -40,14 +40,12 @@ class ClientApiRepository {
 
             const params = new URLSearchParams({ page });
 
-            // Добавляем параметры фильтрации
             Object.entries(this.currentFilters).forEach(([key, value]) => {
                 if (value !== undefined && value !== null && value !== "") {
                     params.append(key, value);
                 }
             });
 
-            // Добавляем параметры сортировки
             if (this.currentSort) {
                 params.append("sort", this.currentSort);
                 params.append("sort_order", this.currentSortOrder);
@@ -103,7 +101,6 @@ class ClientApiRepository {
         }
     }
 
-    // Новый метод для применения фильтров без смены страницы
     applyFilters(filters = null, sort = null, sortOrder = null) {
         this.currentFilters = filters || {};
         this.currentSort = sort || '';
@@ -113,10 +110,9 @@ class ClientApiRepository {
             sort: this.currentSort,
             sortOrder: this.currentSortOrder
         });
-        return this.loadList(1); // Возвращаемся на первую страницу
+        return this.loadList(1);
     }
 
-    // Новый метод для сброса фильтров
     resetFilters() {
         this.currentFilters = {};
         this.currentSort = '';
@@ -127,13 +123,5 @@ class ClientApiRepository {
             sortOrder: 'asc'
         });
         return this.loadList(1);
-    }
-
-    getCurrentFilters() {
-        return {
-            filters: this.currentFilters,
-            sort: this.currentSort,
-            sortOrder: this.currentSortOrder
-        };
     }
 }

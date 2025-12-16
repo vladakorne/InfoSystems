@@ -135,7 +135,9 @@ class ClientRepDBDecorator:
         """Добавляет фильтр."""
         self._filters.add_filter(filter_obj)
 
-    def set_sorter(self, sorter: Callable[[Client], Any], reverse: bool = False) -> None:
+    def set_sorter(
+        self, sorter: Callable[[Client], Any], reverse: bool = False
+    ) -> None:
         """Устанавливает функцию сортировки и направление."""
         self._sorter = sorter
         self._reverse_sort = reverse
@@ -183,31 +185,48 @@ class ClientRepDBDecorator:
 
         return filtered_clients
 
+
 class ClientRepFileDecorator:
     """Декоратор для ClientRepository с встроенной фильтрацией и сортировкой."""
 
     def __init__(self, file_repo: ClientRepository):
         self._file_repo = file_repo
-        self._filter_func: Callable[[Client], bool] = lambda c: (
-            c.surname.startswith("И") or c.phone[2:5] == "929"
-        )
-        self._sort_key: Callable[[Client], Any] = lambda c: c.surname.lower()
+        self._filters: CompositeFilter = CompositeFilter()
+        self._sorter: Optional[Callable[[Client], Any]] = None
+        self._reverse_sort: bool = False
+
+    def add_filter(self, filter_obj: ClientFilter) -> None:
+        """Добавляет фильтр."""
+        self._filters.add_filter(filter_obj)
+
+    def set_sorter(
+        self, sorter: Callable[[Client], Any], reverse: bool = False
+    ) -> None:
+        """Устанавливает функцию сортировки и направление."""
+        self._sorter = sorter
+        self._reverse_sort = reverse
 
     def get_k_n_short_list(self, k: int, n: int) -> List[ClientShort]:
         """Возвращает список k клиентов со страницы n с фильтрацией и сортировкой."""
-        clients: List[Client] = self._file_repo.read_all()
+        # Загружаем всех клиентов из файлового репозитория
+        all_clients: List[Client] = self._file_repo.read_all()
 
-        clients = list(filter(self._filter_func, clients))
+        # Применяем фильтры
+        filtered_clients = [c for c in all_clients if self._filters.apply(c)]
 
-        clients.sort(key=self._sort_key)
+        # Применяем сортировку, если установлена
+        if self._sorter:
+            filtered_clients.sort(key=self._sorter, reverse=self._reverse_sort)
 
+        # Применяем пагинацию
         start_index = (n - 1) * k
-        if start_index >= len(clients):
+        if start_index >= len(filtered_clients):
             return []
 
         end_index = start_index + k
-        page_clients = clients[start_index:end_index]
+        page_clients = filtered_clients[start_index:end_index]
 
+        # Конвертируем в ClientShort
         return [
             ClientShort(c.id, c.surname, c.name, c.patronymic, c.phone)
             for c in page_clients
@@ -215,6 +234,19 @@ class ClientRepFileDecorator:
 
     def get_count(self) -> int:
         """Возвращает количество клиентов, прошедших фильтрацию."""
-        clients: List[Client] = self._file_repo.read_all()
-        clients = list(filter(self._filter_func, clients))
-        return len(clients)
+        all_clients: List[Client] = self._file_repo.read_all()
+        filtered_clients = [c for c in all_clients if self._filters.apply(c)]
+        return len(filtered_clients)
+
+    def read_all(self) -> List[Client]:
+        """Возвращает всех клиентов с применением фильтров и сортировки."""
+        all_clients: List[Client] = self._file_repo.read_all()
+
+        # Применяем фильтры
+        filtered_clients = [c for c in all_clients if self._filters.apply(c)]
+
+        # Применяем сортировку, если установлена
+        if self._sorter:
+            filtered_clients.sort(key=self._sorter, reverse=self._reverse_sort)
+
+        return filtered_clients

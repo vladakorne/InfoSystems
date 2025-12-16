@@ -5,7 +5,6 @@ class ClientTableView {
     constructor(tableBody, statusElement, refreshButton) {
         this.tableBody = tableBody;
         this.statusElement = statusElement;
-        this.refreshButton = refreshButton;
 
         this.onViewClick = null;
         this.onEditClick = null;
@@ -76,7 +75,7 @@ class ClientTableView {
         const editCell = document.createElement("td");
         const editButton = document.createElement("button");
         editButton.className = "btn btn-edit";
-        editButton.textContent = "✏️";
+        editButton.textContent = "Редактировать";
         editButton.title = "Редактировать";
         editButton.addEventListener("click", (e) => {
             e.stopPropagation();
@@ -87,18 +86,18 @@ class ClientTableView {
         editCell.appendChild(editButton);
 
         // Кнопка удаления
-        const deleteButton = document.createElement("button");
-        deleteButton.className = "btn btn-delete";
-        deleteButton.textContent = "🗑️";
-        deleteButton.title = "Удалить";
-        deleteButton.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const clientName = `${client.surname} ${client.name} ${client.patronymic}`.trim();
-            if (this.onDeleteClick) {
-                this.onDeleteClick(client.id, clientName);
-            }
-        });
-        editCell.appendChild(deleteButton);
+        // const deleteButton = document.createElement("button");
+        // deleteButton.className = "btn btn-delete";
+        // deleteButton.textContent = "Удалить";
+        // deleteButton.title = "Удалить";
+        // deleteButton.addEventListener("click", (e) => {
+        //     e.stopPropagation();
+        //     const clientName = `${client.surname} ${client.name} ${client.patronymic}`.trim();
+        //     if (this.onDeleteClick) {
+        //         this.onDeleteClick(client.id, clientName);
+        //     }
+        // });
+        // editCell.appendChild(deleteButton);
 
         row.appendChild(editCell);
 
@@ -111,7 +110,6 @@ class ClientTableView {
         cell.colSpan = 8;
         cell.className = "no-data";
         cell.innerHTML = `
-            <div class="no-data-icon">📋</div>
             <p>${message}</p>
         `;
         row.appendChild(cell);

@@ -133,11 +133,21 @@ class ClientRequestHandler(SimpleHTTPRequestHandler):
         page_size_raw = query.get("page_size", [None])[0]
         page_size = self._safe_int(page_size_raw) if page_size_raw is not None else None
 
+        # Извлекаем параметры фильтрации
+        filters = self._extract_filters(query)
+
+        # Извлекаем параметры сортировки
+        sort_by = query.get("sort", [None])[0]
+        sort_order = query.get("sort_order", ["asc"])[0]  # По умолчанию asc
+
         try:
             payload = self.client_controller.get_short_clients(
-                page_size=page_size, page=page
+                page_size=page_size,
+                page=page,
+                filters=filters,
+                sort_by=sort_by,
+                sort_order=sort_order,
             )
-            # Возвращаем старый формат без обертки
             self._send_json(payload)
         except Exception as e:
             self._send_json({"error": f"Ошибка сервера: {str(e)}"}, status=500)
@@ -225,6 +235,28 @@ class ClientRequestHandler(SimpleHTTPRequestHandler):
             self._send_json(
                 {"success": False, "message": f"Ошибка сервера: {str(e)}"}, status=500
             )
+
+    def _extract_filters(self, query: Dict[str, list[str]]) -> Dict[str, Any]:
+        """Извлекает параметры фильтрации из query string."""
+        filters: Dict[str, Any] = {}
+
+        surname_prefix = query.get("surname_prefix", [None])[0]
+        if surname_prefix:
+            filters["surname_prefix"] = surname_prefix
+
+        name_prefix = query.get("name_prefix", [None])[0]
+        if name_prefix:
+            filters["name_prefix"] = name_prefix
+
+        patronymic_prefix = query.get("patronymic_prefix", [None])[0]
+        if patronymic_prefix:
+            filters["patronymic_prefix"] = patronymic_prefix
+
+        phone_substring = query.get("phone_substring", [None])[0]
+        if phone_substring:
+            filters["phone_substring"] = phone_substring
+
+        return filters
 
     def _safe_int(self, value: Any, default: int | None = None) -> int | None:
         try:

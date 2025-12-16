@@ -21,6 +21,11 @@ class ClientDetailView {
         });
     }
 
+    // Добавляем метод render для совместимости
+    render(client) {
+        this.show(client);
+    }
+
     showLoading(id) {
         this.currentId = id;
         this.titleElement.textContent = "Загружаем данные клиента…";

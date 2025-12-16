@@ -30,7 +30,7 @@ class AddClientController:
         for field in required_fields:
             value = client_data.get(field, "")
             if not value or not str(value).strip():
-                errors[field] = f"Поле обязательно для заполнения"
+                errors[field] = "Поле обязательно для заполнения"
 
         # Валидация ФИО с использованием методов из ClientShortInfo
         try:
