@@ -3,96 +3,99 @@
  */
 class FilterController {
     constructor(filterForm, resetButton, statusElement, uiController) {
-        this.filterForm = filterForm;
-        this.resetButton = resetButton;
-        this.statusElement = statusElement;
-        this.uiController = uiController;
+        this.filterForm = filterForm; //HTML форма с полями фильтрации
+        this.resetButton = resetButton; // сброс
+        this.statusElement = statusElement; // элемент отображения статуса фильтра/сортировки
+        this.uiController = uiController; // контроллер для передачи команд
         this.currentFilters = {};
         this.currentSort = '';
         this.currentSortOrder = 'asc';
     }
 
     init() {
-        // Обработка отправки формы фильтрации
+        // обработка отправки формы фильтрации
         this.filterForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.applyFilters();
+            e.preventDefault(); // предотвращаем перезагрузку страницы
+            this.applyFilters(); // применяем фильтры
         });
 
-        // Обработка сброса фильтров
+        // обработка сброса фильтров
         this.resetButton.addEventListener('click', () => {
             this.resetFilters();
         });
 
-        // Загружаем сохраненные фильтры из localStorage
+        // загружаем сохраненные фильтры из localStorage
         this.loadSavedFilters();
     }
 
     applyFilters() {
-        // Получаем значения из формы
+        // получаем значения из формы
+        // через поиск элемеентов получаем значения полей, удаляем по краям пробелы
         const filters = {
             surname_prefix: document.getElementById('surname-filter').value.trim(),
             name_prefix: document.getElementById('name-filter').value.trim(),
-            patronymic_prefix: document.getElementById('patronymic-filter').value.trim(),
+            patronymic_prefix: document.getElementById('patronymic-filter').value,
             phone_substring: document.getElementById('phone-filter').value.trim()
         };
 
+        // получаем сортировку
         const sortBy = document.getElementById('sort-filter').value;
         const sortOrder = document.getElementById('sort-order').value;
 
-        // Убираем пустые фильтры
-        Object.keys(filters).forEach(key => {
+        // убираем пустые фильтры
+        Object.keys(filters).forEach(key => { // получаем массив ключей объекта и перебираем каждый ключ
             if (!filters[key]) {
-                delete filters[key];
+                delete filters[key]; // удаляет св-во из объекта, если значение пустое
             }
         });
 
-        // Сохраняем текущие фильтры
+        // сохраняем текущие фильтры
         this.currentFilters = filters;
         this.currentSort = sortBy;
         this.currentSortOrder = sortOrder;
 
-        // Сохраняем в localStorage
+        // сохраняем в localStorage
         this.saveFilters();
 
-        // Обновляем статус
+        // обновляем статус
         this.updateStatus();
 
-        // Применяем фильтры через контроллер
+        // применяем фильтры через контроллер
         this.uiController.applyFilters(filters, sortBy, sortOrder);
     }
 
     resetFilters() {
-        // Сбрасываем форму
+        // сбрасываем форму
         this.filterForm.reset();
 
-        // Сбрасываем текущие фильтры
+        // сбрасываем текущие фильтры
         this.currentFilters = {};
         this.currentSort = '';
         this.currentSortOrder = 'asc';
 
-        // Очищаем localStorage
+        // очищаем localStorage
         localStorage.removeItem('clientFilters');
         localStorage.removeItem('clientSort');
         localStorage.removeItem('clientSortOrder');
 
-        // Обновляем статус
+        // обновляем статус
         this.updateStatus();
 
-        // Применяем сброс через контроллер
+        // применяем сброс через контроллер
         this.uiController.resetFilters();
     }
 
     updateStatus() {
+        // получаем текущие параметтры для формирования статуса
         const filters = this.currentFilters;
         const sort = this.currentSort;
         const sortOrder = this.currentSortOrder;
 
-        const activeFilters = Object.entries(filters).filter(([_, value]) => value);
+        const activeFilters = Object.entries(filters).filter(([_, value]) => value);  //преобразует объект в массив пар [ключ, значение], фильтруем пары, игнорируем первое знач
         const hasFilters = activeFilters.length > 0;
         const hasSort = !!sort;
 
-        let statusText = '';
+        let statusText = ''; // переменная статуса
 
         if (!hasFilters && !hasSort) {
             statusText = 'Фильтры не применены';
@@ -101,12 +104,15 @@ class FilterController {
 
             if (hasFilters) {
                 const filterText = activeFilters.map(([key, value]) => {
-                    const labels = {
+                    const labels = { // маппинг API ключей на русские названия
                         surname_prefix: 'Фамилия',
                         name_prefix: 'Имя',
                         patronymic_prefix: 'Отчество',
                         phone_substring: 'Телефон'
                     };
+                    if (key === 'patronymic_prefix') {
+                        return `${labels[key]}: ${value === 'yes' ? 'есть' : 'нет'}`;
+                    }
                     return `${labels[key]}: "${value}"`;
                 }).join(', ');
                 parts.push(`Фильтры: ${filterText}`);
@@ -127,9 +133,10 @@ class FilterController {
             statusText = parts.join(' | ');
         }
 
-        this.statusElement.textContent = statusText;
+        this.statusElement.textContent = statusText; // установка в элемент статуса
     }
 
+    // сохранение текущих параметров
     saveFilters() {
         localStorage.setItem('clientFilters', JSON.stringify(this.currentFilters));
         localStorage.setItem('clientSort', this.currentSort);
@@ -143,9 +150,9 @@ class FilterController {
             const savedSortOrder = localStorage.getItem('clientSortOrder');
 
             if (savedFilters) {
-                this.currentFilters = JSON.parse(savedFilters);
+                this.currentFilters = JSON.parse(savedFilters); // строку преобразовали обратно в объект
 
-                // Заполняем форму сохраненными значениями
+                // заполняем форму сохраненными значениями
                 if (this.currentFilters.surname_prefix) {
                     document.getElementById('surname-filter').value = this.currentFilters.surname_prefix;
                 }
@@ -153,7 +160,9 @@ class FilterController {
                     document.getElementById('name-filter').value = this.currentFilters.name_prefix;
                 }
                 if (this.currentFilters.patronymic_prefix) {
-                    document.getElementById('patronymic-filter').value = this.currentFilters.patronymic_prefix;
+                    // Устанавливаем значение select
+                    const patronymicSelect = document.getElementById('patronymic-filter');
+                    patronymicSelect.value = this.currentFilters.patronymic_prefix;
                 }
                 if (this.currentFilters.phone_substring) {
                     document.getElementById('phone-filter').value = this.currentFilters.phone_substring;
@@ -174,13 +183,5 @@ class FilterController {
         } catch (e) {
             console.error('Ошибка загрузки сохраненных фильтров:', e);
         }
-    }
-
-    getCurrentFilters() {
-        return {
-            filters: this.currentFilters,
-            sort: this.currentSort,
-            sortOrder: this.currentSortOrder
-        };
     }
 }

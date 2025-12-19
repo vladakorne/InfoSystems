@@ -1,58 +1,59 @@
 /**
- * Представление таблицы клиентов
+ * Представление таблицы клиентов - отвечает только за отображение данных
  */
 class ClientTableView {
-    constructor(tableBody, statusElement, refreshButton) {
+    constructor(tableBody, statusElement) { // элемент таблицы, элемент для отображения статуса
         this.tableBody = tableBody;
         this.statusElement = statusElement;
 
-        this.onViewClick = null;
-        this.onEditClick = null;
-        this.onDeleteClick = null;
-        this.onRefreshClick = null;
+        // инициалицъзация callback-функций (наблюдатель)
+        this.onViewClick = null; // клик просмотра
+        this.onEditClick = null; // клик редактирования
+        // this.onDeleteClick = null;
     }
 
-    render(data) {
-        this.tableBody.innerHTML = "";
+    render(data) { // очищает таблицу перед отрисовкой новых данных
+        this.tableBody.innerHTML = "";  // быстрый способ очистить содержимое
 
-        if (!data.items || data.items.length === 0) {
+        if (!data.items || data.items.length === 0) {  // проверяем массив items
             this._renderNoData("Клиенты не найдены");
             this.statusElement.textContent = `Записей: 0`;
-            return;
         }
 
-        data.items.forEach((client) => {
-            const row = this._createClientRow(client);
-            this.tableBody.appendChild(row);
+        // итерация по массиву клиентов и создание строк таблицы
+        data.items.forEach((client) => {    // перебор всех элементов массива
+            const row = this._createClientRow(client); // создание DOM-элемента строки
+            this.tableBody.appendChild(row);   // добавление строки в таблицу
         });
 
-        this.statusElement.textContent = `Показано ${data.items.length} из ${data.total} записей (страница ${data.page})`;
+        this.statusElement.textContent = `Показано ${data.items.length} из ${data.total} записей (страница ${data.page})`;  // обновление статус строки
     }
 
+    // создание строки таблицы
     _createClientRow(client) {
         const row = document.createElement("tr");
 
-        // ID
-        const idCell = document.createElement("td");
-        idCell.textContent = client.id;
-        row.appendChild(idCell);
+        // ячейка ID
+        const idCell = document.createElement("td"); // создали элемент ячейки
+        idCell.textContent = client.id; // безопасно установили текст
+        row.appendChild(idCell);    // добавили ячейку в строку
 
-        // Фамилия
+        // ячейка Фамилия
         const surnameCell = document.createElement("td");
         surnameCell.textContent = client.surname;
         row.appendChild(surnameCell);
 
-        // Имя
+        // ячейка Имя
         const nameCell = document.createElement("td");
         nameCell.textContent = client.name;
         row.appendChild(nameCell);
 
-        // Отчество
+        // ячейка Отчество
         const patronymicCell = document.createElement("td");
         patronymicCell.textContent = client.patronymic;
         row.appendChild(patronymicCell);
 
-        // Телефон
+        // ячейка Телефон
         const phoneCell = document.createElement("td");
         phoneCell.textContent = client.phone;
         row.appendChild(phoneCell);
@@ -60,16 +61,16 @@ class ClientTableView {
         // Кнопка просмотра
         const viewCell = document.createElement("td");
         const viewButton = document.createElement("button");
-        viewButton.className = "btn btn-view";
+        viewButton.className = "btn btn-view"; // установка css классов
         viewButton.textContent = "Просмотр";
-        viewButton.addEventListener("click", (e) => {
-            e.stopPropagation();
-            if (this.onViewClick) {
-                this.onViewClick(client.id);
+        viewButton.addEventListener("click", (e) => { // обработчик клика
+            e.stopPropagation(); // предотвращение всплытия события
+            if (this.onViewClick) { // проверка наличия обработчика
+                this.onViewClick(client.id); // вызов callback с ID клиента
             }
         });
-        viewCell.appendChild(viewButton);
-        row.appendChild(viewCell);
+        viewCell.appendChild(viewButton); // добавление кнопки в ячейку
+        row.appendChild(viewCell); // ячейку добавили в строку
 
         // Кнопка редактирования
         const editCell = document.createElement("td");
@@ -100,18 +101,18 @@ class ClientTableView {
         // editCell.appendChild(deleteButton);
 
         row.appendChild(editCell);
-
-        return row;
+        return row; // возврат полностью собранной строки таблицы вызывающему коду
     }
 
+    // методы разных состояний
     _renderNoData(message) {
         const row = document.createElement("tr");
         const cell = document.createElement("td");
-        cell.colSpan = 8;
+        cell.colSpan = 7; // 8 если добавить удаление
         cell.className = "no-data";
         cell.innerHTML = `
             <p>${message}</p>
-        `;
+        `; // использование HTML
         row.appendChild(cell);
         this.tableBody.appendChild(row);
     }
@@ -121,21 +122,21 @@ class ClientTableView {
         this.statusElement.textContent = "Загрузка...";
     }
 
-    showSuccess(message) {
-        const originalText = this.statusElement.textContent;
+    showSuccess(message) { // показ временного успешного сообщения:
+        const originalText = this.statusElement.textContent; // сохранение исходного текста статуса
         this.statusElement.textContent = message;
 
         setTimeout(() => {
             this.statusElement.textContent = originalText;
-        }, 3000);
+        }, 3000); // автоматическое восстановление через 3 секунды
     }
 
-    showError(message) {
+    showError(message) {  // сообщение об ошибке
         this.statusElement.textContent = `Ошибка: ${message}`;
         this.statusElement.style.color = "#e74c3c";
 
         setTimeout(() => {
             this.statusElement.style.color = "";
-        }, 5000);
+        }, 5000); // восстановление через 5 секунд
     }
 }

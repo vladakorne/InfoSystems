@@ -163,15 +163,6 @@
             background-color: #27ae60;
         }
 
-        .btn-refresh {
-            background-color: #95a5a6;
-            color: white;
-        }
-
-        .btn-refresh:hover {
-            background-color: #7f8c8d;
-        }
-
         .btn-edit {
             background-color: #f39c12;
             color: white;
@@ -395,8 +386,12 @@
                     <input type="text" id="name-filter" placeholder="Например: Ив">
                 </div>
                 <div class="filter-group">
-                    <label for="patronymic-filter">Отчество начинается с:</label>
-                    <input type="text" id="patronymic-filter" placeholder="Например: Сер">
+                    <label for="patronymic-filter">Отчество:</label>
+                    <select id="patronymic-filter">
+                        <option value="">Все</option>
+                        <option value="yes">Есть отчество</option>
+                        <option value="no">Нет отчества</option>
+                    </select>
                 </div>
                 <div class="filter-group">
                     <label for="phone-filter">Телефон содержит:</label>
@@ -435,14 +430,6 @@
                         <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
                     </svg>
                     Добавить клиента
-                </button>
-            </div>
-            <div>
-                <button id="refresh-btn" class="btn btn-refresh">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
-                    </svg>
-                    Обновить
                 </button>
             </div>
         </div>
@@ -504,7 +491,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             const tableBody = document.getElementById("client-table-body");
             const statusElement = document.getElementById("table-status");
-            const refreshButton = document.getElementById("refresh-btn");
             const addButton = document.getElementById("add-btn");
             const overlayElement = document.getElementById("detail-overlay");
             const detailContent = document.getElementById("detail-content");
@@ -514,7 +500,7 @@
             const overlayTitle = document.getElementById("overlay-title");
 
             const repository = new ClientApiRepository("/api");
-            const tableView = new ClientTableView(tableBody, statusElement, refreshButton);
+            const tableView = new ClientTableView(tableBody, statusElement);
             const detailView = new ClientDetailView(
                 overlayElement,
                 detailContent,

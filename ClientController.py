@@ -22,8 +22,7 @@ class ClientController:
 
     def __init__(self, repository: Optional[ClientRepDBAdapter] = None) -> None:
         """инициализация контроллера."""
-        self.repository: ClientRepDBAdapter = (
-            repository
+        self.repository: ClientRepDBAdapter = (repository
             or ClientRepDBAdapter(  # опциаональный параметр для внедрения зависимости
                 ClientRepDB()  # если репозиторий не передан. то создается стандтарный
             )
@@ -50,7 +49,8 @@ class ClientController:
 
             patronymic_prefix = filters.get("patronymic_prefix")
             if patronymic_prefix:
-                decorated.add_filter(PatronymicFilter(patronymic_prefix))
+                if patronymic_prefix == "yes" or patronymic_prefix == "no":
+                    decorated.add_filter(PatronymicFilter(patronymic_prefix))
 
             phone_substring = filters.get("phone_substring")
             if phone_substring:
@@ -81,9 +81,8 @@ class ClientController:
         filters: Optional[Dict[str, Any]] = None,
         sort_by: Optional[str] = None,
         sort_order: Optional[str] = None,
-    ) -> Dict[
-        str, Any
-    ]:  # метод получения списка клиентов с поддержкой: пагинации, фильтрации и сортировки
+    ) -> Dict[str, Any]:  # метод получения списка клиентов с поддержкой: пагинации, фильтрации и сортировки
+
         """получает список клиентов с краткой информацией."""
 
         # гарантируем корректный номер страницы

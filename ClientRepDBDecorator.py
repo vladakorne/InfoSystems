@@ -44,13 +44,22 @@ class NameFilter(ClientFilter):
 class PatronymicFilter(ClientFilter):
     """Фильтр по началу отчества."""
 
-    def __init__(self, prefix: str) -> None:
-        self.prefix = prefix.lower()
+    def __init__(self, has_patronymic: str) -> None:
+        self.has_patronymic = has_patronymic.lower().strip()
 
     def apply(self, client: Client) -> bool:
-        if not self.prefix:
+        if not self.has_patronymic:
+            return True  # не фильтруем
+
+        # проверяем наличие отчества у клиента
+        client_has_patronymic = bool(client.patronymic and str(client.patronymic).strip())
+
+        if self.has_patronymic == "yes":
+            return client_has_patronymic  # только клиенты с отчеством
+        elif self.has_patronymic == "no":
+            return not client_has_patronymic  # только клиенты без отчества
+        else:
             return True
-        return client.patronymic.lower().startswith(self.prefix)
 
 
 class PhoneFilter(ClientFilter):

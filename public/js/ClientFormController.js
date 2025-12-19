@@ -4,52 +4,52 @@
  */
 class ClientFormController {
     constructor() {
-        this.mode = null;
+        this.mode = null; // режим работы (добавление/редактирование)
         this.clientId = null;
-        this.form = null;
-        this.isSubmitting = false;
-        this.redirectTimer = null;
+        //this.form = null;
+        this.isSubmitting = false; // флаг для предотвращения двойной отправки формы
+        this.redirectTimer = null; // таймер для автоматического перенаправления после успешной операции
 
-        // Ссылки на DOM элементы
+        // ссылки на DOM элементы
         this.elements = {
-            form: null,
-            submitBtn: null,
+            form: null,             // элеент формы
+            submitBtn: null,        // кнопки
             cancelBtn: null,
             deleteBtn: null,
-            successMessage: null,
+            successMessage: null,   // элементы сообщений
             errorMessage: null,
             notFoundMessage: null,
-            loading: null,
+            loading: null,          // элементы загрузки
             loadingText: null
         };
     }
 
-    /**
-     * Инициализация контроллера
-     * @param {string} mode - Режим работы ('add' или 'edit')
-     * @param {number|null} clientId - ID клиента для редактирования
-     */
+
+     //Инициализация контроллера
+     //@param {string} mode - Режим работы ('add' или 'edit')
+     //@param {number|null} clientId - ID клиента для редактирования
     init(mode, clientId = null) {
+        // сохранение параметров в св-х класса
         this.mode = mode;
         this.clientId = clientId;
 
-        // Находим DOM элементы
+        // находим DOM элементы
         this._findElements();
 
-        // Настраиваем обработчики событий
+        // настраиваем обработчики событий
         this._setupEventListeners();
 
-        // Загружаем данные если нужно
-        this._loadInitialData();
+        // загружаем данные если нужно (в режиме редактирования)
+        this._loadInitialData().catch(error => {
+            console.error('Ошибка при загрузке данных:', error);
+            this._showError('Не удалось загрузить данные формы');
+        });
 
-        // Показываем кнопку удаления в режиме редактирования
+        // показываем кнопку удаления (в режиме редактирования)
         this._toggleDeleteButton();
     }
 
-    /**
-     * Поиск DOM элементов
-     * @private
-     */
+    // Поиск DOM элементов
     _findElements() {
         this.elements = {
             form: document.getElementById('client-form'),
@@ -64,46 +64,48 @@ class ClientFormController {
         };
     }
 
-    /**
-     * Настройка обработчиков событий
-     * @private
-     */
+    // Настройка обработчиков событий
     _setupEventListeners() {
-        const { form, cancelBtn, deleteBtn } = this.elements;
+        const { form, cancelBtn, deleteBtn } = this.elements; // деструктуризация для удобного доступа к элементам
 
-        // Обработка отправки формы
+        // обработка отправки формы
         form.addEventListener('submit', (e) => this._handleSubmit(e));
 
-        // Обработка отмены
+        // обработка отмены
         cancelBtn.addEventListener('click', () => {
             window.location.href = 'index.html';
         });
 
-        // Обработка удаления
-        deleteBtn.addEventListener('click', () => {
+        // обработка удаления
+        deleteBtn.addEventListener('click', async () => {
             if (this.clientId) {
-                this._handleDelete();
+                try {
+                    await this._handleDelete();
+                } catch (error) {
+                    console.error('Ошибка при удалении:', error);
+                }
             }
         });
 
-        // Очистка таймера при уходе со страницы
+        // очистка таймера при уходе/перезагрузке со страницы
         window.addEventListener('beforeunload', () => {
             if (this.redirectTimer) {
                 clearTimeout(this.redirectTimer);
             }
         });
 
-        // Валидация в реальном времени
+        // валидация при потере фокуса (blur) и очистка ошибок при вводе (input)
         form.querySelectorAll('.form-input').forEach(input => {
             input.addEventListener('blur', () => this._validateField(input));
             input.addEventListener('input', () => this._clearFieldError(input));
         });
     }
 
+    // управление кнопкой удаления
     _toggleDeleteButton() {
         const { deleteBtn } = this.elements;
 
-        // Показываем кнопку удаления только в режиме редактирования
+        // показываем кнопку удаления только в режиме редактирования
         if (this.mode === 'edit' && this.clientId) {
             deleteBtn.classList.remove('hidden');
         } else {
@@ -111,17 +113,14 @@ class ClientFormController {
         }
     }
 
-    /**
-     * Обработка удаления клиента
-     * @private
-     */
+    // обработка удаления клиента
     async _handleDelete() {
-        if (!this.clientId) return;
+        if (!this.clientId) return; // проверка наличия клиента
 
-        // Подтверждение удаления
+        // подтверждение удаления
         const confirmed = confirm('Вы уверены, что хотите удалить этого клиента? Это действие нельзя отменить.');
 
-        if (!confirmed) return;
+        if (!confirmed) return; // если отказ - выходим
 
         this._resetMessages();
         this._setLoading(true, 'Удаление клиента...');
@@ -132,14 +131,14 @@ class ClientFormController {
                 headers: {
                     'Content-Type': 'application/json',
                 }
-            });
+            }); // отправка DELETE запроса на сервер
 
-            const result = await response.json();
+            const result = await response.json();  // ответ от сервера
 
             if (response.ok && result.success) {
                 this._showSuccess(result.message || 'Клиент успешно удален');
 
-                // Перенаправление на главную страницу через 2 секунды
+                // перенаправление на главную страницу через 2 секунды
                 this.redirectTimer = setTimeout(() => {
                     window.location.href = 'index.html';
                 }, 2000);
@@ -156,30 +155,23 @@ class ClientFormController {
         }
     }
 
-    /**
-     * Загрузка начальных данных
-     * @private
-     */
+     // загрузка начальных данных
     async _loadInitialData() {
+        // если режим редактирования - загружает данные клиента, иначе показывает пустую форму
         if (this.mode === 'edit' && this.clientId) {
             await this._loadClientData(this.clientId);
         } else {
-            // В режиме добавления просто показываем пустую форму
+            // в режиме добавления просто показываем пустую форму
             this._showFormReady();
         }
     }
 
-    /**
-     * Загрузка данных клиента для редактирования
-     * @param {number} clientId - ID клиента
-     * @private
-     */
+     // загрузка данных клиента для редактирования
     async _loadClientData(clientId) {
         this._setLoading(true, 'Загрузка данных клиента...');
 
         try {
-            console.log(`Загрузка данных клиента ${clientId}...`);
-            const response = await fetch(`/api/clients/${clientId}/edit/form`);
+            const response = await fetch(`/api/clients/${clientId}/edit/form`); // GET запрос для получения данных клиента
 
             if (response.status === 404) {
                 this._showNotFound();
@@ -191,15 +183,16 @@ class ClientFormController {
                 throw new Error(errorData.error || `Ошибка сервера: ${response.status}`);
             }
 
+            // проверка бизнес-логики успеха в ответе сервера
             const result = await response.json();
 
             if (result.success === false) {
                 throw new Error(result.error || 'Не удалось загрузить данные');
             }
 
-            // Заполняем форму данными
+            // заполняем форму данными
             this._populateForm(result.data || result);
-            this._showFormReady();
+            this._showFormReady(); // активация кнопки отправки
 
         } catch (error) {
             console.error('Ошибка при загрузке данных клиента:', error);
@@ -209,18 +202,14 @@ class ClientFormController {
         }
     }
 
-    /**
-     * Заполнение формы данными
-     * @param {Object} clientData - Данные клиента
-     * @private
-     */
+    // заполнение формы данными
     _populateForm(clientData) {
         console.log('Заполнение формы данными:', clientData);
 
-        // Устанавливаем ID клиента в скрытое поле
+        // устанавливаем ID клиента в скрытое поле для отправки на сервер
         document.getElementById('client-id').value = clientData.id || '';
 
-        // Заполняем поля формы
+        // заполняем поля формы
         const fields = ['surname', 'name', 'patronymic', 'phone', 'passport', 'email', 'comment'];
         fields.forEach(field => {
             const element = document.getElementById(field);
@@ -230,20 +219,17 @@ class ClientFormController {
         });
     }
 
-    /**
-     * Обработка отправки формы
-     * @param {Event} e - Событие отправки формы
-     * @private
-     */
+    // обработка отправки формы
     async _handleSubmit(e) {
         e.preventDefault();
 
         if (this.isSubmitting) return;
 
+        // сбросили все сообщения и ошибки
         this._resetMessages();
         this._clearAllFieldErrors();
 
-        // Собираем данные формы
+        // собираем данные формы с удалением лишних пробелов (trim())
         const formData = new FormData(this.elements.form);
         const clientData = {
             surname: formData.get('surname').trim(),
@@ -255,7 +241,7 @@ class ClientFormController {
             comment: formData.get('comment').trim()
         };
 
-        // Валидация на клиенте
+        // валидация на клиенте
         const validationErrors = this._validateForm(clientData);
         if (Object.keys(validationErrors).length > 0) {
             this._showFieldErrors(validationErrors);
@@ -267,6 +253,7 @@ class ClientFormController {
         this._setLoading(true, this.mode === 'add' ? 'Добавление клиента...' : 'Сохранение изменений...');
 
         try {
+            //определение URL и метода HTTP в зависимости от режима
             let url, method;
 
             if (this.mode === 'add') {
@@ -277,6 +264,7 @@ class ClientFormController {
                 method = 'POST';
             }
 
+            // отправляем данные на сервер
             const response = await fetch(url, {
                 method: method,
                 headers: {
@@ -290,18 +278,33 @@ class ClientFormController {
             if (response.ok && result.success) {
                 this._showSuccess(result.message || 'Операция выполнена успешно');
 
-                // Очищаем форму в режиме добавления
+                // очищаем форму в режиме добавления
                 if (this.mode === 'add') {
                     this.elements.form.reset();
                 }
 
                 // Автоматическое перенаправление через 3 секунды
                 this.redirectTimer = setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 3000);
+                    // отправляем сообщение родительскому окну об обновлении
+                    if (window.opener) {
+                        // если открыто как всплывающее окно
+                        window.opener.postMessage({
+                            type: 'form_closed',
+                            action: this.mode, // 'add' или 'edit'
+                            clientId: this.clientId,
+                            success: true
+                        }, window.location.origin);
+                        window.close();
+                    } else {
+                        // если отдельная вкладка
+                        // сообщаем через localStorage о необходимости обновления
+                        localStorage.setItem('clients_should_refresh', Date.now().toString());
+                        window.location.href = 'index.html';
+                    }
+                }, 2000);
 
             } else {
-                // Обработка ошибок валидации с сервера
+                // обработка ошибок валидации с сервера
                 if (result.errors) {
                     this._showFieldErrors(result.errors);
                 }
@@ -317,16 +320,10 @@ class ClientFormController {
         }
     }
 
-    /**
-     * Валидация формы на клиенте
-     * @param {Object} data - Данные формы
-     * @returns {Object} Объект с ошибками
-     * @private
-     */
+    // доп валидация на ux
     _validateForm(data) {
         const errors = {};
 
-        // Проверка обязательных полей
         const requiredFields = ['surname', 'name', 'phone'];
         requiredFields.forEach(field => {
             if (!data[field]) {
@@ -334,17 +331,14 @@ class ClientFormController {
             }
         });
 
-        // Проверка телефона (базовая)
-        if (data.phone && !/^[+]?\d{7,15}$/.test(data.phone.replace(/\s+/g, ''))) {
+        if (data.phone && !/^[+]?\d{7,11}$/.test(data.phone.replace(/\s+/g, ''))) {
             errors.phone = 'Некорректный формат телефона';
         }
 
-        // Проверка паспорта
         if (data.passport && !/^\d{10}$/.test(data.passport)) {
             errors.passport = 'Паспорт должен содержать ровно 10 цифр';
         }
 
-        // Проверка email
         if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
             errors.email = 'Некорректный формат email';
         }
@@ -352,11 +346,8 @@ class ClientFormController {
         return errors;
     }
 
-    /**
-     * Валидация отдельного поля
-     * @param {HTMLElement} input - Поле ввода
-     * @private
-     */
+
+     //Валидация отдельного поля - @param {HTMLElement} input - Поле ввода
     _validateField(input) {
         const fieldId = input.id;
         const value = input.value.trim();
@@ -366,11 +357,7 @@ class ClientFormController {
         }
     }
 
-    /**
-     * Очистка ошибки поля
-     * @param {HTMLElement} input - Поле ввода
-     * @private
-     */
+    // очистка ошибки поля
     _clearFieldError(input) {
         if (input.classList.contains('error')) {
             const errorEl = document.getElementById(`${input.id}-error`);
@@ -381,10 +368,7 @@ class ClientFormController {
         }
     }
 
-    /**
-     * Очистка всех ошибок полей
-     * @private
-     */
+     // очистка всех ошибок полей
     _clearAllFieldErrors() {
         document.querySelectorAll('.error-message').forEach(el => {
             el.classList.remove('show');
@@ -395,23 +379,15 @@ class ClientFormController {
         });
     }
 
-    /**
-     * Показать ошибки полей
-     * @param {Object} errors - Объект с ошибками {field: message}
-     * @private
-     */
+    // показывает ошибки полей - @param {Object} errors - Объект с ошибками {field: message}
     _showFieldErrors(errors) {
         Object.entries(errors).forEach(([field, message]) => {
             this._showFieldError(field, message);
         });
     }
 
-    /**
-     * Показать ошибку конкретного поля
-     * @param {string} fieldId - ID поля
-     * @param {string} message - Сообщение об ошибке
-     * @private
-     */
+     // показывает ошибку конкретного поля - @param {string} fieldId - ID поля
+     // @param {string} message - Сообщение об ошибке
     _showFieldError(fieldId, message) {
         const input = document.getElementById(fieldId);
         const errorEl = document.getElementById(`${fieldId}-error`);
@@ -423,58 +399,37 @@ class ClientFormController {
         }
     }
 
-    /**
-     * Сброс всех сообщений
-     * @private
-     */
+     // сброс всех сообщений
     _resetMessages() {
         this.elements.successMessage.classList.remove('show');
         this.elements.errorMessage.classList.remove('show');
         this.elements.notFoundMessage.classList.remove('show');
     }
 
-    /**
-     * Показать сообщение об успехе
-     * @param {string} message - Сообщение
-     * @private
-     */
+    // сообщение об успехе
     _showSuccess(message) {
         this.elements.successMessage.textContent = message;
         this.elements.successMessage.classList.add('show');
     }
 
-    /**
-     * Показать сообщение об ошибке
-     * @param {string} message - Сообщение
-     * @private
-     */
+    // сообщение об ошибке
     _showError(message) {
         this.elements.errorMessage.textContent = message;
         this.elements.errorMessage.classList.add('show');
     }
 
-    /**
-     * Показать сообщение "не найдено"
-     * @private
-     */
+    // сообщение "не найдено"
     _showNotFound() {
         this.elements.notFoundMessage.classList.add('show');
         this._disableForm();
     }
 
-    /**
-     * Показать, что форма готова
-     * @private
-     */
     _showFormReady() {
         // Активируем кнопку отправки
         this.elements.submitBtn.disabled = false;
     }
 
-    /**
-     * Отключить форму
-     * @private
-     */
+    // отключаем форму при ошибке "не найден"
     _disableForm() {
         this.elements.submitBtn.disabled = true;
         this.elements.form.querySelectorAll('input, textarea').forEach(input => {
@@ -482,12 +437,9 @@ class ClientFormController {
         });
     }
 
-    /**
-     * Установить состояние загрузки
-     * @param {boolean} isLoading - Загружается ли
-     * @param {string} text - Текст загрузки
-     * @private
-     */
+     // установка состояние загрузки
+     // @param {boolean} isLoading - Загружается ли
+     // @param {string} text - Текст загрузки
     _setLoading(isLoading, text = '') {
         if (isLoading) {
             this.elements.loading.classList.remove('hidden');
