@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Форма бронирования</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+
+        header {
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+
+        .booking-id-badge {
+            background: #ecf0f1;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #2c3e50;
+            margin-left: 10px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 30px;
+            color: #3498db;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+
+        /* Форма */
+        .form-container {
+            margin: 30px 0;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .form-label.required::after {
+            content: " *";
+            color: #e74c3c;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .form-input.error {
+            border-color: #e74c3c;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            font-family: inherit;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .price-info {
+            margin-top: 8px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #3498db;
+            font-size: 14px;
+            color: #2c3e50;
+            display: none;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .form-hint {
+            color: #7f8c8d;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-primary:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-danger:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        /* Сообщения */
+        .message {
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message-success {
+            background-color: #d5f4e6;
+            color: #27ae60;
+            border: 1px solid #2ecc71;
+        }
+
+        .message-error {
+            background-color: #fadbd8;
+            color: #c0392b;
+            border: 1px solid #e74c3c;
+        }
+
+        .message-warning {
+            background-color: #fef5e7;
+            color: #f39c12;
+            border: 1px solid #f1c40f;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px;
+            justify-content: center;
+            color: #7f8c8d;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .validation-rules {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 30px;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .mode-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+            text-transform: uppercase;
+        }
+
+        .mode-add {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .mode-edit {
+            background-color: #f39c12;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link" id="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="currentColor"/>
+            </svg>
+            Назад к списку бронирований
+        </a>
+
+        <header>
+            <h1 id="page-header">
+                <span id="header-text">Форма бронирования</span>
+                <span id="booking-id-badge" class="booking-id-badge hidden">ID: <span id="booking-id-value"></span></span>
+                <span id="mode-indicator" class="mode-indicator hidden"></span>
+            </h1>
+            <p class="subtitle" id="page-subtitle">Заполните форму данных бронирования</p>
+        </header>
+
+        <!-- Сообщения -->
+        <div id="success-message" class="message message-success">
+            Операция успешно выполнена! Через 3 секунды вы будете перенаправлены...
+        </div>
+
+        <div id="error-message" class="message message-error">
+            Произошла ошибка при выполнении операции.
+        </div>
+
+        <div id="not-found-message" class="message message-warning">
+            Бронирование не найдено. Возможно, оно было удалено.
+        </div>
+
+        <div class="form-container">
+            <form id="booking-form">
+                <input type="hidden" id="booking-id" name="id" value="">
+
+                <div class="form-group">
+                    <label for="client_id" class="form-label required">Клиент</label>
+                    <select id="client_id" name="client_id" class="form-input" required>
+                        <option value="">Выберите клиента</option>
+                        <!-- Клиенты будут загружены через JS -->
+                    </select>
+                    <div class="error-message" id="client_id-error"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="room_id" class="form-label required">Номер</label>
+                    <select id="room_id" name="room_id" class="form-input" required>
+                        <option value="">Выберите номер</option>
+                        <!-- Номера будут загружены через JS -->
+                    </select>
+                    <div class="error-message" id="room_id-error"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="check_in" class="form-label required">Дата заезда</label>
+                    <input type="date" id="check_in" name="check_in" class="form-input" required>
+                    <div class="error-message" id="check_in-error"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="check_out" class="form-label required">Дата выезда</label>
+                    <input type="date" id="check_out" name="check_out" class="form-input" required>
+                    <div class="error-message" id="check_out-error"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="total_sum" class="form-label required">Общая сумма (₽)</label>
+                    <input type="number" id="total_sum" name="total_sum" class="form-input"
+                           placeholder="0.00" min="0" step="0.01" required readonly>
+                    <div class="error-message" id="total_sum-error"></div>
+                    <div id="price-info" class="price-info">
+                        Сумма будет рассчитана автоматически после выбора номера и дат
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="status" class="form-label required">Статус</label>
+                    <select id="status" name="status" class="form-input" required>
+                        <option value="">Выберите статус</option>
+                        <option value="confirmed">Подтверждено</option>
+                        <option value="cancelled">Отменено</option>
+                        <option value="completed">Завершено</option>
+                        <option value="pending">Ожидание</option>
+                    </select>
+                    <div class="error-message" id="status-error"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes" class="form-label">Заметки</label>
+                    <textarea id="notes" name="notes" class="form-textarea"
+                              placeholder="Дополнительная информация о бронировании"></textarea>
+                    <div class="error-message" id="notes-error"></div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="submit-btn">
+                        Сохранить
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="cancel-btn">
+                        Отмена
+                    </button>
+                    <button type="button" class="btn btn-danger hidden" id="delete-btn">
+                        Удалить бронирование
+                    </button>
+                </div>
+            </form>
+
+            <div class="validation-rules">
+                <h3>Правила валидации:</h3>
+                <ul>
+                    <li>Все поля кроме "Заметки" — обязательные</li>
+                    <li>Дата выезда должна быть позже даты заезда</li>
+                    <li>Максимальная длительность бронирования — 30 дней</li>
+                    <li>Сумма рассчитывается автоматически на основе цены номера и количества ночей</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <span id="loading-text">Загрузка...</span>
+        </div>
+    </div>
+
+    <script src="js/booking.js"></script>
+    <script>
+        // Главный скрипт инициализации формы бронирования
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const bookingId = params.get('id');
+            const mode = bookingId ? 'edit' : 'add';
+
+            // Создаем контроллер формы бронирования
+            const formController = new BookingFormController();
+
+            // Инициализируем в нужном режиме
+            formController.init(mode, bookingId);
+        });
+    </script>
+</body>
+</html>

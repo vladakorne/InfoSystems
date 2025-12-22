@@ -65,6 +65,60 @@ class DatabaseConnection:
                     );
                     """
                 )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS rooms (
+                        id SERIAL PRIMARY KEY,
+                        room_number VARCHAR ( 10 ) NOT NULL UNIQUE,
+                        capacity INTEGER NOT NULL CHECK ( capacity > 0 AND capacity <= 10),
+                        is_available BOOLEAN DEFAULT TRUE,
+                        category VARCHAR( 20) NOT NULL,
+                        price_per_night DECIMAL (10, 2 ) NOT NULL CHECK ( price_per_night > 0 ),
+                        description TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS bookings (
+                        id SERIAL PRIMARY KEY,
+                        client_id INTEGER NOT NULL,
+                        room_id INTEGER NOT NULL,
+                        check_in DATE NOT NULL,
+                        check_out DATE NOT NULL,
+                        total_sum DECIMAL ( 10, 2 ) NOT NULL CHECK (total_sum >= 0),
+                        status VARCHAR (20) DEFAULT 'confirmed',
+                        notes TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        CONSTRAINT fk_client FOREIGN KEY (client_id)
+                            REFERENCES clients ( id ) ON DELETE CASCADE,
+                        CONSTRAINT fk_room FOREIGN KEY ( room_id )
+                            REFERENCES rooms (id) ON DELETE CASCADE,
+                        CONSTRAINT check_dates CHECK ( check_out > check_in ),
+                        CONSTRAINT max_duration CHECK (( check_out -check_in ) <= 30));
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_rooms_available
+                        ON rooms(is_available);
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_bookings_dates
+                        ON bookings(check_in, check_out);
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_bookings_status
+                        ON bookings(status);
+                    """
+                )
                 conn.commit()
         finally:
             conn.close()

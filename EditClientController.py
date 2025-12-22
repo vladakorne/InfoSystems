@@ -1,4 +1,4 @@
-""" Контроллер для редактирования существующего клиента """
+"""Контроллер для редактирования существующего клиента"""
 
 from typing import Dict, Any, Optional
 
@@ -7,13 +7,14 @@ from ClientShortInfo import ClientShort
 from ClientRepDBAdapter import ClientRepDBAdapter
 from ClientRepDB import ClientRepDB
 
+
 class EditClientController:
     """Контроллер для управления формой редактирования клиента."""
 
     def __init__(self, repository: Optional[ClientRepDBAdapter] = None) -> None:
         self.repository: ClientRepDBAdapter = repository or ClientRepDBAdapter(
             ClientRepDB()
-        ) # если репозиторий не передан, то создаем новый ClientRepDBAdapter с ClientRepDB
+        )  # если репозиторий не передан, то создаем новый ClientRepDBAdapter с ClientRepDB
 
     def get_client_for_edit(self, client_id: int) -> Optional[Dict[str, Any]]:
         """Получает данные клиента для редактирования."""
@@ -31,7 +32,7 @@ class EditClientController:
                     "email": client.email or "",
                     "comment": client.comment or "",
                 }
-                return result # возвращаем словарь данных, чтобы заполнять форму
+                return result  # возвращаем словарь данных, чтобы заполнять форму
             else:
                 print(f"Клиент {client_id} не найден")
                 return None
@@ -41,7 +42,7 @@ class EditClientController:
             return None
 
     def validate_client_data(self, client_data: Dict[str, Any]) -> Dict[str, Any]:
-        """ Валидирует данные клиента при редактировании """
+        """Валидирует данные клиента при редактировании"""
         errors = {}
 
         # валидация обязательных полей
@@ -97,8 +98,9 @@ class EditClientController:
         return errors
 
     def update_client(
-        self, client_id: int, client_data: Dict[str, Any]) -> Dict[str, Any]:
-        """ Обновляет данные клиента """
+        self, client_id: int, client_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Обновляет данные клиента"""
 
         # проверяем существование клиента
         existing_client = self.repository.get_by_id(client_id)
@@ -137,7 +139,10 @@ class EditClientController:
             if success:
                 return {"success": True, "message": "Данные клиента успешно обновлены"}
             else:
-                return {"success": False, "message": "Не удалось обновить данные клиента",}
+                return {
+                    "success": False,
+                    "message": "Не удалось обновить данные клиента",
+                }
 
         # обработка всех остальных исключений:
         except ValueError as e:

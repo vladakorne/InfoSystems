@@ -1,24 +1,27 @@
-""" Контроллер для удаления клиентов """
+"""Контроллер для удаления клиентов"""
 
 from typing import Dict, Any
 
 from ClientRepDBAdapter import ClientRepDBAdapter
 from ClientRepDB import ClientRepDB
 
+
 class DeleteClientController:
-    """Контроллер для управления удалением клиента """
+    """Контроллер для управления удалением клиента"""
 
     def __init__(self, repository=None):
-        """Инициализация контроллера удаления """
-        self.repository = repository or ClientRepDBAdapter(ClientRepDB()) # используем переданный репозиторий или создаем
+        """Инициализация контроллера удаления"""
+        self.repository = repository or ClientRepDBAdapter(
+            ClientRepDB()
+        )  # используем переданный репозиторий или создаем
 
     def delete_client(self, client_id: int) -> Dict[str, Any]:
-        """ Удаляет клиента по ID """
+        """Удаляет клиента по ID"""
 
         try:
             # проверяем существование клиента
             existing_client = self.repository.get_by_id(client_id)
-            if not existing_client: # является ли значение ложным
+            if not existing_client:  # является ли значение ложным
                 print(f"Клиент {client_id} не найден")
                 return {
                     "success": False,

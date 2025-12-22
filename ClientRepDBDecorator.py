@@ -52,7 +52,9 @@ class PatronymicFilter(ClientFilter):
             return True  # не фильтруем
 
         # проверяем наличие отчества у клиента
-        client_has_patronymic = bool(client.patronymic and str(client.patronymic).strip())
+        client_has_patronymic = bool(
+            client.patronymic and str(client.patronymic).strip()
+        )
 
         if self.has_patronymic == "yes":
             return client_has_patronymic  # только клиенты с отчеством

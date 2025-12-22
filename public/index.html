@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Управление клиентами</title>
+    <title>Управление отелем</title>
     <style>
         * {
             margin: 0;
@@ -43,6 +43,54 @@
         .subtitle {
             color: #7f8c8d;
             font-size: 16px;
+        }
+
+        /* Табы */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+            background: #f8f9fa;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: #7f8c8d;
+            transition: all 0.2s;
+            position: relative;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab:hover {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+
+        .tab.active {
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+            background-color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         /* Форма фильтрации */
@@ -176,30 +224,6 @@
             background-color: #d68910;
         }
 
-        .btn-delete {
-            background-color: #e74c3c;
-            color: white;
-            padding: 6px 12px;
-            font-size: 13px;
-            white-space: nowrap;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            transition: background-color 0.2s;
-        }
-
-        .btn-delete:hover {
-            background-color: #c0392b;
-        }
-
-        .btn-delete:disabled {
-            background-color: #bdc3c7;
-            cursor: not-allowed;
-        }
-
         /* Таблица */
         .table-container {
             overflow-x: auto;
@@ -211,7 +235,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 900px; /* Увеличиваем для 7 столбцов */
+            min-width: 900px;
         }
 
         th {
@@ -234,20 +258,55 @@
             background-color: #f8f9fa;
         }
 
-        /* Фиксированные ширины столбцов */
-        th:nth-child(1), td:nth-child(1) { width: 80px; }  /* ID */
-        th:nth-child(2), td:nth-child(2) { width: 180px; } /* Фамилия */
-        th:nth-child(3), td:nth-child(3) { width: 150px; } /* Имя */
-        th:nth-child(4), td:nth-child(4) { width: 180px; } /* Отчество */
-        th:nth-child(5), td:nth-child(5) { width: 160px; } /* Телефон */
-        th:nth-child(6), td:nth-child(6) {
-            width: 100px;
-            text-align: center;
-        } /* Просмотр */
-        th:nth-child(7), td:nth-child(7) {
-            width: 90px;
-            text-align: center;
-        } /* Редактирование */
+        /* Статусы для номеров */
+        .status-available {
+            color: #27ae60;
+            font-weight: 500;
+            padding: 2px 8px;
+            background-color: #d5f4e6;
+            border-radius: 4px;
+        }
+
+        .status-unavailable {
+            color: #e74c3c;
+            font-weight: 500;
+            padding: 2px 8px;
+            background-color: #fadbd8;
+            border-radius: 4px;
+        }
+
+        /* Статусы для бронирований */
+        .status-confirmed {
+            color: #2ecc71;
+            font-weight: 500;
+            padding: 2px 8px;
+            background-color: #d5f4e6;
+            border-radius: 4px;
+        }
+
+        .status-cancelled {
+            color: #e74c3c;
+            font-weight: 500;
+            padding: 2px 8px;
+            background-color: #fadbd8;
+            border-radius: 4px;
+        }
+
+        .status-completed {
+            color: #3498db;
+            font-weight: 500;
+            padding: 2px 8px;
+            background-color: #d6eaf8;
+            border-radius: 4px;
+        }
+
+        .status-pending {
+            color: #f39c12;
+            font-weight: 500;
+            padding: 2px 8px;
+            background-color: #fef5e7;
+            border-radius: 4px;
+        }
 
         .muted {
             color: #95a5a6;
@@ -369,100 +428,328 @@
 <body>
     <div class="container">
         <header>
-            <h1>Управление клиентами</h1>
-            <p class="subtitle">Система управления базой данных клиентов</p>
+            <h1>Управление отелем</h1>
+            <p class="subtitle">Система управления клиентами, номерами и бронированиями</p>
         </header>
 
-        <!-- Форма фильтрации и сортировки -->
-        <form id="filter-form" class="filter-form">
-            <h3>Фильтрация и сортировка</h3>
-            <div class="filter-grid">
-                <div class="filter-group">
-                    <label for="surname-filter">Фамилия начинается с:</label>
-                    <input type="text" id="surname-filter" placeholder="Например: Куз">
-                </div>
-                <div class="filter-group">
-                    <label for="name-filter">Имя начинается с:</label>
-                    <input type="text" id="name-filter" placeholder="Например: Ив">
-                </div>
-                <div class="filter-group">
-                    <label for="patronymic-filter">Отчество:</label>
-                    <select id="patronymic-filter">
-                        <option value="">Все</option>
-                        <option value="yes">Есть отчество</option>
-                        <option value="no">Нет отчества</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="phone-filter">Телефон содержит:</label>
-                    <input type="text" id="phone-filter" placeholder="Например: 929 или 495">
-                </div>
-                <div class="filter-group">
-                    <label for="sort-filter">Сортировка по:</label>
-                    <select id="sort-filter">
-                        <option value="">Без сортировки</option>
-                        <option value="id">ID</option>
-                        <option value="surname">Фамилия</option>
-                        <option value="name">Имя</option>
-                        <option value="patronymic">Отчество</option>
-                        <option value="phone">Телефон</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="sort-order">Направление:</label>
-                    <select id="sort-order">
-                        <option value="asc">По возрастанию ↑</option>
-                        <option value="desc">По убыванию ↓</option>
-                    </select>
-                </div>
-            </div>
-            <div class="filter-actions">
-                <button type="submit" class="btn btn-primary">Применить фильтры</button>
-                <button type="button" id="reset-filters" class="btn btn-secondary">Сбросить</button>
-                <span id="filter-status" class="filter-status">Фильтры не применены</span>
-            </div>
-        </form>
+        <!-- Табы для переключения между сущностями -->
+        <div class="tabs">
+            <button class="tab active" data-tab="clients">Клиенты</button>
+            <button class="tab" data-tab="rooms">Номера</button>
+            <button class="tab" data-tab="bookings">Бронирования</button>
+        </div>
 
-        <div class="controls">
-            <div>
-                <button id="add-btn" class="btn btn-primary">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
-                    </svg>
-                    Добавить клиента
-                </button>
+        <!-- ========== КЛИЕНТЫ ========== -->
+        <div id="clients-tab" class="tab-content active">
+            <!-- Форма фильтрации и сортировки клиентов -->
+            <form id="client-filter-form" class="filter-form">
+                <h3>Фильтрация и сортировка клиентов</h3>
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label for="surname-filter">Фамилия начинается с:</label>
+                        <input type="text" id="surname-filter" placeholder="Например: Куз">
+                    </div>
+                    <div class="filter-group">
+                        <label for="name-filter">Имя начинается с:</label>
+                        <input type="text" id="name-filter" placeholder="Например: Ив">
+                    </div>
+                    <div class="filter-group">
+                        <label for="patronymic-filter">Отчество:</label>
+                        <select id="patronymic-filter">
+                            <option value="">Все</option>
+                            <option value="yes">Есть отчество</option>
+                            <option value="no">Нет отчества</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="phone-filter">Телефон содержит:</label>
+                        <input type="text" id="phone-filter" placeholder="Например: 929 или 495">
+                    </div>
+                    <div class="filter-group">
+                        <label for="client-sort-filter">Сортировка по:</label>
+                        <select id="client-sort-filter">
+                            <option value="">Без сортировки</option>
+                            <option value="id">ID</option>
+                            <option value="surname">Фамилия</option>
+                            <option value="name">Имя</option>
+                            <option value="patronymic">Отчество</option>
+                            <option value="phone">Телефон</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="client-sort-order">Направление:</label>
+                        <select id="client-sort-order">
+                            <option value="asc">По возрастанию ↑</option>
+                            <option value="desc">По убыванию ↓</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">Применить фильтры</button>
+                    <button type="button" id="client-reset-filters" class="btn btn-secondary">Сбросить</button>
+                    <span id="client-filter-status" class="filter-status">Фильтры не применены</span>
+                </div>
+            </form>
+
+            <div class="controls">
+                <div>
+                    <button id="add-client-btn" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                        </svg>
+                        Добавить клиента
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Фамилия</th>
+                            <th>Имя</th>
+                            <th>Отчество</th>
+                            <th>Телефон</th>
+                            <th>Действия</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="client-table-body">
+                        <tr>
+                            <td colspan="8" class="no-data">
+                                <p>Загрузка данных клиентов...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="status-bar">
+                <span id="client-table-status">Подключение к серверу...</span>
             </div>
         </div>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Фамилия</th>
-                        <th>Имя</th>
-                        <th>Отчество</th>
-                        <th>Телефон</th>
-                        <th>Действия</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="client-table-body">
-                    <tr>
-                        <td colspan="8" class="no-data">
-                            <p>Загрузка данных клиентов...</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- ========== НОМЕРА ========== -->
+        <div id="rooms-tab" class="tab-content">
+            <!-- Форма фильтрации и сортировки номеров -->
+            <form id="room-filter-form" class="filter-form">
+                <h3>Фильтрация и сортировка номеров</h3>
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label for="room-number-filter">Номер комнаты:</label>
+                        <input type="text" id="room-number-filter" placeholder="Например: 101">
+                    </div>
+                    <div class="filter-group">
+                        <label for="category-filter">Категория:</label>
+                        <select id="category-filter">
+                            <option value="">Все</option>
+                            <option value="Стандарт">Стандарт</option>
+                            <option value="Люкс">Люкс</option>
+                            <option value="Эконом">Эконом</option>
+                            <option value="Студия">Студия</option>
+                            <option value="Апартаменты">Апартаменты</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="min-capacity-filter">Мин. вместимость:</label>
+                        <input type="number" id="min-capacity-filter" placeholder="1" min="1" max="10">
+                    </div>
+                    <div class="filter-group">
+                        <label for="max-capacity-filter">Макс. вместимость:</label>
+                        <input type="number" id="max-capacity-filter" placeholder="10" min="1" max="10">
+                    </div>
+                    <div class="filter-group">
+                        <label for="availability-filter">Доступность:</label>
+                        <select id="availability-filter">
+                            <option value="all">Все</option>
+                            <option value="available">Доступны</option>
+                            <option value="unavailable">Заняты</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="min-price-filter">Мин. цена:</label>
+                        <input type="number" id="min-price-filter" placeholder="1000" min="0">
+                    </div>
+                    <div class="filter-group">
+                        <label for="max-price-filter">Макс. цена:</label>
+                        <input type="number" id="max-price-filter" placeholder="10000" min="0">
+                    </div>
+                    <div class="filter-group">
+                        <label for="room-sort-filter">Сортировка по:</label>
+                        <select id="room-sort-filter">
+                            <option value="">Без сортировки</option>
+                            <option value="id">ID</option>
+                            <option value="room_number">Номер</option>
+                            <option value="price">Цена</option>
+                            <option value="capacity">Вместимость</option>
+                            <option value="category">Категория</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="room-sort-order">Направление:</label>
+                        <select id="room-sort-order">
+                            <option value="asc">По возрастанию ↑</option>
+                            <option value="desc">По убыванию ↓</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">Применить фильтры</button>
+                    <button type="button" id="room-reset-filters" class="btn btn-secondary">Сбросить</button>
+                    <span id="room-filter-status" class="filter-status">Фильтры не применены</span>
+                </div>
+            </form>
+
+            <div class="controls">
+                <div>
+                    <button id="add-room-btn" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                        </svg>
+                        Добавить номер
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Номер</th>
+                            <th>Категория</th>
+                            <th>Вместимость</th>
+                            <th>Цена за ночь</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="room-table-body">
+                        <tr>
+                            <td colspan="8" class="no-data">
+                                <p>Загрузка данных номеров...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="status-bar">
+                <span id="room-table-status">Подключение к серверу...</span>
+            </div>
         </div>
 
-        <div class="status-bar">
-            <span id="table-status">Подключение к серверу...</span>
+        <!-- ========== БРОНИРОВАНИЯ ========== -->
+        <div id="bookings-tab" class="tab-content">
+            <!-- Форма фильтрации и сортировки бронирований -->
+            <form id="booking-filter-form" class="filter-form">
+                <h3>Фильтрация и сортировка бронирований</h3>
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label for="client-id-filter">ID клиента:</label>
+                        <input type="number" id="client-id-filter" placeholder="Например: 1" min="1">
+                    </div>
+                    <div class="filter-group">
+                        <label for="room-id-filter">ID номера:</label>
+                        <input type="number" id="room-id-filter" placeholder="Например: 1" min="1">
+                    </div>
+                    <div class="filter-group">
+                        <label for="status-filter">Статус:</label>
+                        <select id="status-filter">
+                            <option value="">Все</option>
+                            <option value="confirmed">Подтверждено</option>
+                            <option value="cancelled">Отменено</option>
+                            <option value="completed">Завершено</option>
+                            <option value="pending">Ожидание</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="start-date-filter">Дата с:</label>
+                        <input type="date" id="start-date-filter">
+                    </div>
+                    <div class="filter-group">
+                        <label for="end-date-filter">Дата по:</label>
+                        <input type="date" id="end-date-filter">
+                    </div>
+                    <div class="filter-group">
+                        <label for="min-price-booking-filter">Мин. сумма:</label>
+                        <input type="number" id="min-price-booking-filter" placeholder="0" min="0">
+                    </div>
+                    <div class="filter-group">
+                        <label for="max-price-booking-filter">Макс. сумма:</label>
+                        <input type="number" id="max-price-booking-filter" placeholder="100000" min="0">
+                    </div>
+                    <div class="filter-group">
+                        <label for="booking-sort-filter">Сортировка по:</label>
+                        <select id="booking-sort-filter">
+                            <option value="">Без сортировки</option>
+                            <option value="id">ID</option>
+                            <option value="check_in">Дата заезда</option>
+                            <option value="check_out">Дата выезда</option>
+                            <option value="total_sum">Сумма</option>
+                            <option value="created_at">Дата создания</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="booking-sort-order">Направление:</label>
+                        <select id="booking-sort-order">
+                            <option value="asc">По возрастанию ↑</option>
+                            <option value="desc">По убыванию ↓</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">Применить фильтры</button>
+                    <button type="button" id="booking-reset-filters" class="btn btn-secondary">Сбросить</button>
+                    <span id="booking-filter-status" class="filter-status">Фильтры не применены</span>
+                </div>
+            </form>
+
+            <div class="controls">
+                <div>
+                    <button id="add-booking-btn" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                        </svg>
+                        Добавить бронирование
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Клиент ID</th>
+                            <th>Номер ID</th>
+                            <th>Дата заезда</th>
+                            <th>Дата выезда</th>
+                            <th>Сумма</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="booking-table-body">
+                        <tr>
+                            <td colspan="9" class="no-data">
+                                <p>Загрузка данных бронирований...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="status-bar">
+                <span id="booking-table-status">Подключение к серверу...</span>
+            </div>
         </div>
     </div>
 
-    <!-- Модальное окно детальной информации -->
+    <!-- Общее модальное окно детальной информации -->
     <div id="detail-overlay" class="overlay hidden">
         <div class="modal">
             <div class="modal-header">
@@ -481,17 +768,59 @@
         </div>
     </div>
 
+    <!-- Загрузка всех JS файлов -->
     <script src="js/ClientApiRepository.js"></script>
     <script src="js/ClientTableView.js"></script>
     <script src="js/ClientDetailView.js"></script>
     <script src="js/UiController.js"></script>
     <script src="js/FilterController.js"></script>
+
+    <script src="js/room.js"></script>
+    <script src="js/booking.js"></script>
+
+
     <script>
-        // Инициализация приложения
+        // Основная инициализация приложения
         document.addEventListener('DOMContentLoaded', () => {
+            // Инициализация табов
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+
+                    // Удаляем активный класс у всех табов и контента
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+
+                    // Добавляем активный класс выбранному табу и контенту
+                    tab.classList.add('active');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+
+                    // Инициализируем соответствующую вкладку при первом переходе
+                    if (tabId === 'rooms' && !window.roomsInitialized) {
+                        initRoomsTab();
+                        window.roomsInitialized = true;
+                    } else if (tabId === 'bookings' && !window.bookingsInitialized) {
+                        initBookingsTab();
+                        window.bookingsInitialized = true;
+                    }
+                });
+            });
+
+            // Инициализация вкладки клиентов (уже есть в старом коде)
+            initClientsTab();
+        });
+
+        // ========== Функции инициализации вкладок ==========
+
+        // Инициализация вкладки клиентов
+        // Инициализация вкладки клиентов
+        function initClientsTab() {
             const tableBody = document.getElementById("client-table-body");
-            const statusElement = document.getElementById("table-status");
-            const addButton = document.getElementById("add-btn");
+            const statusElement = document.getElementById("client-table-status");
+            const addButton = document.getElementById("add-client-btn");
             const overlayElement = document.getElementById("detail-overlay");
             const detailContent = document.getElementById("detail-content");
             const closeOverlay = document.getElementById("close-overlay");
@@ -514,12 +843,177 @@
             const controller = new UiController(repository, tableView, detailView);
             controller.init();
 
-            // Инициализация формы фильтрации
-            const filterForm = document.getElementById('filter-form');
-            const resetFiltersBtn = document.getElementById('reset-filters');
-            const filterStatus = document.getElementById('filter-status');
+            // Инициализация формы фильтрации клиентов
+            const filterForm = document.getElementById('client-filter-form');
+            const resetFiltersBtn = document.getElementById('client-reset-filters');
+            const filterStatus = document.getElementById('client-filter-status');
 
-            const filterController = new FilterController(
+            // Создаем свой FilterController для клиентов
+            class ClientFilterController {
+                constructor(filterForm, resetButton, statusElement, uiController) {
+                    this.filterForm = filterForm;
+                    this.resetButton = resetButton;
+                    this.statusElement = statusElement;
+                    this.uiController = uiController;
+                    this.currentFilters = {};
+                    this.currentSort = '';
+                    this.currentSortOrder = 'asc';
+                }
+
+                init() {
+                    this.filterForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.applyFilters();
+                    });
+
+                    this.resetButton.addEventListener('click', () => {
+                        this.resetFilters();
+                    });
+
+                    this.loadSavedFilters();
+                }
+
+                applyFilters() {
+                    const filters = {
+                        surname_prefix: document.getElementById('surname-filter').value.trim(),
+                        name_prefix: document.getElementById('name-filter').value.trim(),
+                        patronymic_prefix: document.getElementById('patronymic-filter').value,
+                        phone_substring: document.getElementById('phone-filter').value.trim()
+                    };
+
+                    const sortBy = document.getElementById('client-sort-filter').value;
+                    const sortOrder = document.getElementById('client-sort-order').value;
+
+                    Object.keys(filters).forEach(key => {
+                        if (!filters[key]) {
+                            delete filters[key];
+                        }
+                    });
+
+                    if (filters.patronymic_prefix === 'all') {
+                        delete filters.patronymic_prefix;
+                    }
+
+                    this.currentFilters = filters;
+                    this.currentSort = sortBy;
+                    this.currentSortOrder = sortOrder;
+
+                    this.saveFilters();
+                    this.updateStatus();
+                    this.uiController.applyFilters(filters, sortBy, sortOrder);
+                }
+
+                resetFilters() {
+                    this.filterForm.reset();
+                    this.currentFilters = {};
+                    this.currentSort = '';
+                    this.currentSortOrder = 'asc';
+
+                    localStorage.removeItem('clientFilters');
+                    localStorage.removeItem('clientSort');
+                    localStorage.removeItem('clientSortOrder');
+
+                    this.updateStatus();
+                    this.uiController.resetFilters();
+                }
+
+                updateStatus() {
+                    const filters = this.currentFilters;
+                    const sort = this.currentSort;
+                    const sortOrder = this.currentSortOrder;
+
+                    const activeFilters = Object.entries(filters).filter(([_, value]) => value);
+                    const hasFilters = activeFilters.length > 0;
+                    const hasSort = !!sort;
+
+                    let statusText = '';
+
+                    if (!hasFilters && !hasSort) {
+                        statusText = 'Фильтры не применены';
+                    } else {
+                        const parts = [];
+
+                        if (hasFilters) {
+                            const filterText = activeFilters.map(([key, value]) => {
+                                const labels = {
+                                    surname_prefix: 'Фамилия',
+                                    name_prefix: 'Имя',
+                                    patronymic_prefix: 'Отчество',
+                                    phone_substring: 'Телефон'
+                                };
+                                if (key === 'patronymic_prefix') {
+                                    return `${labels[key]}: ${value === 'yes' ? 'есть' : 'нет'}`;
+                                }
+                                return `${labels[key]}: "${value}"`;
+                            }).join(', ');
+                            parts.push(`Фильтры: ${filterText}`);
+                        }
+
+                        if (hasSort) {
+                            const sortLabels = {
+                                'id': 'ID',
+                                'surname': 'Фамилия',
+                                'name': 'Имя',
+                                'patronymic': 'Отчество',
+                                'phone': 'Телефон'
+                            };
+                            const direction = sortOrder === 'asc' ? '↑' : '↓';
+                            parts.push(`Сортировка: ${sortLabels[sort]} ${direction}`);
+                        }
+
+                        statusText = parts.join(' | ');
+                    }
+
+                    this.statusElement.textContent = statusText;
+                }
+
+                saveFilters() {
+                    localStorage.setItem('clientFilters', JSON.stringify(this.currentFilters));
+                    localStorage.setItem('clientSort', this.currentSort);
+                    localStorage.setItem('clientSortOrder', this.currentSortOrder);
+                }
+
+                loadSavedFilters() {
+                    try {
+                        const savedFilters = localStorage.getItem('clientFilters');
+                        const savedSort = localStorage.getItem('clientSort');
+                        const savedSortOrder = localStorage.getItem('clientSortOrder');
+
+                        if (savedFilters) {
+                            this.currentFilters = JSON.parse(savedFilters);
+
+                            if (this.currentFilters.surname_prefix) {
+                                document.getElementById('surname-filter').value = this.currentFilters.surname_prefix;
+                            }
+                            if (this.currentFilters.name_prefix) {
+                                document.getElementById('name-filter').value = this.currentFilters.name_prefix;
+                            }
+                            if (this.currentFilters.patronymic_prefix) {
+                                document.getElementById('patronymic-filter').value = this.currentFilters.patronymic_prefix;
+                            }
+                            if (this.currentFilters.phone_substring) {
+                                document.getElementById('phone-filter').value = this.currentFilters.phone_substring;
+                            }
+                        }
+
+                        if (savedSort) {
+                            this.currentSort = savedSort;
+                            document.getElementById('client-sort-filter').value = savedSort;
+                        }
+
+                        if (savedSortOrder) {
+                            this.currentSortOrder = savedSortOrder;
+                            document.getElementById('client-sort-order').value = savedSortOrder;
+                        }
+
+                        this.updateStatus();
+                    } catch (e) {
+                        console.error('Ошибка загрузки сохраненных фильтров:', e);
+                    }
+                }
+            }
+
+            const filterController = new ClientFilterController(
                 filterForm,
                 resetFiltersBtn,
                 filterStatus,
@@ -530,7 +1024,288 @@
             addButton.addEventListener('click', () => {
                 window.location.href = 'client_form.html';
             });
-        });
+        }
+
+        // Инициализация вкладки номеров
+        // Инициализация вкладки номеров
+        function initRoomsTab() {
+            const tableBody = document.getElementById("room-table-body");
+            const statusElement = document.getElementById("room-table-status");
+            const addButton = document.getElementById("add-room-btn");
+            const overlayElement = document.getElementById("detail-overlay");
+            const detailContent = document.getElementById("detail-content");
+            const closeOverlay = document.getElementById("close-overlay");
+            const closeOverlayBtn = document.getElementById("close-overlay-btn");
+            const openTabButton = document.getElementById("open-tab-btn");
+            const overlayTitle = document.getElementById("overlay-title");
+
+            const repository = new RoomApiRepository("/api");
+            const tableView = new RoomTableView(tableBody, statusElement);
+            const detailView = new RoomDetailView(
+                overlayElement,
+                detailContent,
+                closeOverlay,
+                openTabButton,
+                overlayTitle
+            );
+
+            const controller = new RoomUiController(repository, tableView, detailView);
+            controller.init();
+
+            // Создаем свой FilterController для номеров
+            class RoomFilterController {
+                constructor(filterForm, resetButton, statusElement, uiController) {
+                    this.filterForm = filterForm;
+                    this.resetButton = resetButton;
+                    this.statusElement = statusElement;
+                    this.uiController = uiController;
+                    this.currentFilters = {};
+                    this.currentSort = '';
+                    this.currentSortOrder = 'asc';
+                }
+
+                init() {
+                    this.filterForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.applyFilters();
+                    });
+
+                    this.resetButton.addEventListener('click', () => {
+                        this.resetFilters();
+                    });
+
+                    this.loadSavedFilters();
+                }
+
+                applyFilters() {
+                    const filters = {
+                        room_number_substring: document.getElementById('room-number-filter').value.trim(),
+                        category: document.getElementById('category-filter').value,
+                        min_capacity: document.getElementById('min-capacity-filter').value.trim() || undefined,
+                        max_capacity: document.getElementById('max-capacity-filter').value.trim() || undefined,
+                        is_available: document.getElementById('availability-filter').value || undefined,
+                        min_price: document.getElementById('min-price-filter').value.trim() || undefined,
+                        max_price: document.getElementById('max-price-filter').value.trim() || undefined
+                    };
+
+                    const sortBy = document.getElementById('room-sort-filter').value;
+                    const sortOrder = document.getElementById('room-sort-order').value;
+
+                    Object.keys(filters).forEach(key => {
+                        if (!filters[key]) {
+                            delete filters[key];
+                        }
+                    });
+
+                    if (filters.is_available === 'all') {
+                        delete filters.is_available;
+                    } else if (filters.is_available === 'available') {
+                        filters.is_available = true;
+                    } else if (filters.is_available === 'unavailable') {
+                        filters.is_available = false;
+                    }
+
+                    // Преобразуем числовые значения
+                    if (filters.min_capacity) filters.min_capacity = parseInt(filters.min_capacity);
+                    if (filters.max_capacity) filters.max_capacity = parseInt(filters.max_capacity);
+                    if (filters.min_price) filters.min_price = parseFloat(filters.min_price);
+                    if (filters.max_price) filters.max_price = parseFloat(filters.max_price);
+
+                    this.currentFilters = filters;
+                    this.currentSort = sortBy;
+                    this.currentSortOrder = sortOrder;
+
+                    this.saveFilters();
+                    this.updateStatus();
+                    this.uiController.applyFilters(filters, sortBy, sortOrder);
+                }
+
+                resetFilters() {
+                    this.filterForm.reset();
+                    this.currentFilters = {};
+                    this.currentSort = '';
+                    this.currentSortOrder = 'asc';
+
+                    localStorage.removeItem('roomFilters');
+                    localStorage.removeItem('roomSort');
+                    localStorage.removeItem('roomSortOrder');
+
+                    this.updateStatus();
+                    this.uiController.resetFilters();
+                }
+
+                updateStatus() {
+                    const filters = this.currentFilters;
+                    const sort = this.currentSort;
+                    const sortOrder = this.currentSortOrder;
+
+                    const activeFilters = Object.entries(filters).filter(([_, value]) => value);
+                    const hasFilters = activeFilters.length > 0;
+                    const hasSort = !!sort;
+
+                    let statusText = '';
+
+                    if (!hasFilters && !hasSort) {
+                        statusText = 'Фильтры не применены';
+                    } else {
+                        const parts = [];
+
+                        if (hasFilters) {
+                            const filterText = activeFilters.map(([key, value]) => {
+                                const labels = {
+                                    room_number_substring: 'Номер',
+                                    category: 'Категория',
+                                    min_capacity: 'Мин. вместимость',
+                                    max_capacity: 'Макс. вместимость',
+                                    is_available: 'Доступность',
+                                    min_price: 'Мин. цена',
+                                    max_price: 'Макс. цена'
+                                };
+
+                                if (key === 'is_available') {
+                                    return `${labels[key]}: ${value === true ? 'доступен' : 'занят'}`;
+                                }
+                                if (key.includes('capacity') || key.includes('price')) {
+                                    return `${labels[key]}: ${value}`;
+                                }
+                                return `${labels[key]}: "${value}"`;
+                            }).join(', ');
+                            parts.push(`Фильтры: ${filterText}`);
+                        }
+
+                        if (hasSort) {
+                            const sortLabels = {
+                                'id': 'ID',
+                                'room_number': 'Номер',
+                                'price': 'Цена',
+                                'capacity': 'Вместимость',
+                                'category': 'Категория'
+                            };
+                            const direction = sortOrder === 'asc' ? '↑' : '↓';
+                            parts.push(`Сортировка: ${sortLabels[sort]} ${direction}`);
+                        }
+
+                        statusText = parts.join(' | ');
+                    }
+
+                    this.statusElement.textContent = statusText;
+                }
+
+                saveFilters() {
+                    localStorage.setItem('roomFilters', JSON.stringify(this.currentFilters));
+                    localStorage.setItem('roomSort', this.currentSort);
+                    localStorage.setItem('roomSortOrder', this.currentSortOrder);
+                }
+
+                loadSavedFilters() {
+                    try {
+                        const savedFilters = localStorage.getItem('roomFilters');
+                        const savedSort = localStorage.getItem('roomSort');
+                        const savedSortOrder = localStorage.getItem('roomSortOrder');
+
+                        if (savedFilters) {
+                            this.currentFilters = JSON.parse(savedFilters);
+
+                            if (this.currentFilters.room_number_substring) {
+                                document.getElementById('room-number-filter').value = this.currentFilters.room_number_substring;
+                            }
+                            if (this.currentFilters.category) {
+                                document.getElementById('category-filter').value = this.currentFilters.category;
+                            }
+                            if (this.currentFilters.min_capacity) {
+                                document.getElementById('min-capacity-filter').value = this.currentFilters.min_capacity;
+                            }
+                            if (this.currentFilters.max_capacity) {
+                                document.getElementById('max-capacity-filter').value = this.currentFilters.max_capacity;
+                            }
+                            if (this.currentFilters.is_available !== undefined) {
+                                const value = this.currentFilters.is_available === true ? 'available' : 'unavailable';
+                                document.getElementById('availability-filter').value = value;
+                            }
+                            if (this.currentFilters.min_price) {
+                                document.getElementById('min-price-filter').value = this.currentFilters.min_price;
+                            }
+                            if (this.currentFilters.max_price) {
+                                document.getElementById('max-price-filter').value = this.currentFilters.max_price;
+                            }
+                        }
+
+                        if (savedSort) {
+                            this.currentSort = savedSort;
+                            document.getElementById('room-sort-filter').value = savedSort;
+                        }
+
+                        if (savedSortOrder) {
+                            this.currentSortOrder = savedSortOrder;
+                            document.getElementById('room-sort-order').value = savedSortOrder;
+                        }
+
+                        this.updateStatus();
+                    } catch (e) {
+                        console.error('Ошибка загрузки сохраненных фильтров:', e);
+                    }
+                }
+            }
+
+            // Инициализация формы фильтрации номеров
+            const filterForm = document.getElementById('room-filter-form');
+            const resetFiltersBtn = document.getElementById('room-reset-filters');
+            const filterStatus = document.getElementById('room-filter-status');
+
+            const filterController = new RoomFilterController(
+                filterForm,
+                resetFiltersBtn,
+                filterStatus,
+                controller
+            );
+            filterController.init();
+
+            addButton.addEventListener('click', () => {
+                window.location.href = 'room_form.html';
+            });
+        }
+
+        function initBookingsTab() {
+            const tableBody = document.getElementById("booking-table-body");
+            const statusElement = document.getElementById("booking-table-status");
+            const addButton = document.getElementById("add-booking-btn");
+            const overlayElement = document.getElementById("detail-overlay");
+            const detailContent = document.getElementById("detail-content");
+            const closeOverlay = document.getElementById("close-overlay");
+            const closeOverlayBtn = document.getElementById("close-overlay-btn");
+            const openTabButton = document.getElementById("open-tab-btn");
+            const overlayTitle = document.getElementById("overlay-title");
+
+            const repository = new BookingApiRepository("/api");
+            const tableView = new BookingTableView(tableBody, statusElement);
+            const detailView = new BookingDetailView(
+                overlayElement,
+                detailContent,
+                closeOverlay,
+                openTabButton,
+                overlayTitle
+            );
+
+            const controller = new BookingUiController(repository, tableView, detailView);
+            controller.init();
+
+            // Инициализация формы фильтрации бронирований
+            const filterForm = document.getElementById('booking-filter-form');
+            const resetFiltersBtn = document.getElementById('booking-reset-filters');
+            const filterStatus = document.getElementById('booking-filter-status');
+
+            const filterController = new BookingFilterController(
+                filterForm,
+                resetFiltersBtn,
+                filterStatus,
+                controller
+            );
+            filterController.init();
+
+            addButton.addEventListener('click', () => {
+                window.location.href = 'booking_form.html';
+            });
+        }
     </script>
 </body>
 </html>

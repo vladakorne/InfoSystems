@@ -1,4 +1,4 @@
-""" Контроллер для добавления нового клиента """
+"""Контроллер для добавления нового клиента"""
 
 from typing import Dict, Any, Optional
 
@@ -11,14 +11,17 @@ from ClientRepDB import ClientRepDB
 class AddClientController:
     """Контроллер для управления формой добавления клиента"""
 
-    def __init__(self, repository: Optional[ClientRepDBAdapter] = None) -> None: # конструктор с опц пар - репозиторий
+    def __init__(
+        self, repository: Optional[ClientRepDBAdapter] = None
+    ) -> None:  # конструктор с опц пар - репозиторий
         self.repository: ClientRepDBAdapter = repository or ClientRepDBAdapter(
             ClientRepDB()
-        ) # если репозиторий не передан, то создаем новый ClientRepDBAdapter с ClientRepDB
+        )  # если репозиторий не передан, то создаем новый ClientRepDBAdapter с ClientRepDB
 
     def validate_client_data(self, client_data: Dict[str, Any]) -> Dict[str, Any]:
-        """ Валидирует данные клиента
-        Возвращает словарь с ошибками или пустой словарь если валидация прошла успешно """
+        """Валидирует данные клиента
+        Возвращает словарь с ошибками или пустой словарь если валидация прошла успешно
+        """
         errors = {}
 
         # валидация обязательных полей ФИО
@@ -71,8 +74,8 @@ class AddClientController:
         return errors
 
     def add_client(self, client_data: Dict[str, Any]) -> Dict[str, Any]:
-        """ Добавляет нового клиента
-        Возвращает результат операции с сообщением об успехе или ошибках  """
+        """Добавляет нового клиента
+        Возвращает результат операции с сообщением об успехе или ошибках"""
 
         validation_errors = self.validate_client_data(client_data)
         if validation_errors:
